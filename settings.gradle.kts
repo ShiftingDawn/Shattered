@@ -11,7 +11,9 @@ val gson = "2.11.0"
 
 dependencyResolutionManagement {
     versionCatalogs.create("core") {
-        library("asm", "org.ow2.asm", "asm").versionRef(version("asm", asm))
+        val asmVersion = version("asm", asm)
+        library("asm", "org.ow2.asm", "asm").versionRef(asmVersion)
+        library("asmTree", "org.ow2.asm", "asm-tree").versionRef(asmVersion)
     }
     versionCatalogs.create("libs") {
         library("fastutil", "it.unimi.dsi", "fastutil").versionRef(version("fastutil", fastutil))
@@ -20,5 +22,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MultiShattered"
+include("lib")
 include("bootstrap")
 include("core")

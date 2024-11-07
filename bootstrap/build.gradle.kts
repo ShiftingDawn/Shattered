@@ -8,7 +8,10 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project(":lib"))
+    runtimeOnly(project(":core"))
     implementation(project.core.asm)
+    implementation(project.core.asmTree)
 }
 
 java {

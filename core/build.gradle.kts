@@ -9,6 +9,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":lib"))
+
     implementation(project.libs.fastutil)
     implementation(project.libs.gson)
 }
