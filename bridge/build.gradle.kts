@@ -7,6 +7,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project.core.asmTree)
 }
 
 java {

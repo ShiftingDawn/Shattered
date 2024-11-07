@@ -39,7 +39,7 @@ public final class Bootstrap {
 			constructor.setAccessible(true);
 			constructor.newInstance((Object) args);
 		} catch (final Exception e) {
-			throw new RuntimeException(e);
+			throw new BootstrapException(e.getMessage());
 		}
 	}
 

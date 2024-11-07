@@ -28,3 +28,4 @@ build
 *.ipr
 .idea/httpRequests
 modules.xml
+.idea/libraries/Gradle*.xml

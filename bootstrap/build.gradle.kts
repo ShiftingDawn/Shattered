@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":lib"))
+    implementation(project(":bridge"))
     runtimeOnly(project(":core"))
     implementation(project.core.asm)
     implementation(project.core.asmTree)

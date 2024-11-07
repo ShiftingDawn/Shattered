@@ -9,11 +9,11 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":lib"))
-
+    compileOnly(project(":bridge"))
     implementation(project.core.asm)
     implementation(project.core.asmTree)
 
+    implementation(project(":lib"))
     implementation(project.libs.fastutil)
     implementation(project.libs.gson)
 }

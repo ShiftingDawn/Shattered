@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MultiShattered"
-include("lib")
+include("bridge")
 include("bootstrap")
+include("lib")
 include("core")
