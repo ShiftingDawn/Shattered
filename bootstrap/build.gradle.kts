@@ -1,6 +1,5 @@
 plugins {
     application
-    id("io.freefair.lombok") version "8.10.2"
     checkstyle
 }
 
@@ -9,6 +8,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project.core.asm)
 }
 
 java {
