@@ -32,8 +32,9 @@ final class BootstrapClassLoader extends ClassLoader {
 		}
 	}
 
-	void defineClassIfMissing(final String className, final byte[] data) {
+	void defineClassIfMissing(final String className, byte[] data) {
 		if (!this.loadedClasses.containsKey(className)) {
+			data = TransformerRegistry.transform(className, data);
 			final Class<?> result = super.defineClass(className, data, 0, data.length);
 			this.loadedClasses.put(className, result);
 		}

@@ -16,12 +16,6 @@ final class ClassFinder {
 	private static final Set<String> IGNORED_NAMES = Set.of("package-info.class", "module-info.class");
 
 	public static Map<String, byte[]> loadClasses(final String selfPath) throws IOException {
-		final var classData = ClassFinder.collectClasses(selfPath);
-		classData.keySet().forEach(key -> classData.put(key, TransformerRegistry.transform(key, classData.get(key))));
-		return classData;
-	}
-
-	private static Map<String, byte[]> collectClasses(final String selfPath) throws IOException {
 		final Map<String, byte[]> result = new HashMap<>();
 		final String[] paths = Objects.requireNonNull(System.getProperty("java.class.path")).split(";");
 		for (final String path : paths) {

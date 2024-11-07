@@ -12,6 +12,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import shattered.lib.ClassTransformer;
 import shattered.lib.InvocationIndex;
 import shattered.lib.RuntimeMetadata;
 import shattered.lib.ShatteredEntryPoint;
@@ -24,6 +25,7 @@ public final class Bootstrap {
 		try {
 			Bootstrap.LOADER.registerClass(InvocationIndex.class);
 			Bootstrap.LOADER.registerClass(RuntimeMetadata.class);
+
 			final URL self = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
 			final File selfFile = new File(self.toURI());
 			final Map<String, byte[]> classData = ClassFinder.loadClasses(selfFile.getAbsolutePath());
@@ -85,13 +87,17 @@ public final class Bootstrap {
 	private static void processClassRecursive(final Map<String, List<String>> dependencyTree, final Map<String, byte[]> classData, final String classToLoad) {
 		final List<String> parents = dependencyTree.get(classToLoad);
 		parents.forEach(parentClass -> Bootstrap.processClassRecursive(dependencyTree, classData, parentClass));
-		Bootstrap.LOADER.defineClassIfMissing(classToLoad, classData.get(classToLoad));
 		final ClassReader reader = new ClassReader(classData.get(classToLoad));
 		final ClassNode node = new ClassNode(Opcodes.ASM9);
 		reader.accept(node, 0);
-		if (classToLoad.equals("shattered.core.Shattered")) {
+		if (node.interfaces.contains(Type.getInternalName(ClassTransformer.class))) {
+			TransformerRegistry.registerTransformer(classToLoad, node);
+			return;
+		}
+		if (node.visibleAnnotations != null) {
 			node.visibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), classToLoad));
 		}
+		Bootstrap.LOADER.defineClassIfMissing(classToLoad, classData.get(classToLoad));
 	}
 
 	private static Map<String, List<String>> annotationMetaMap;

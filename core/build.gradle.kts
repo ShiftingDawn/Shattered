@@ -11,6 +11,9 @@ repositories {
 dependencies {
     implementation(project(":lib"))
 
+    implementation(project.core.asm)
+    implementation(project.core.asmTree)
+
     implementation(project.libs.fastutil)
     implementation(project.libs.gson)
 }
