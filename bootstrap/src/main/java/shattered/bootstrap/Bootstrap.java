@@ -12,10 +12,10 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
-import shattered.lib.ClassTransformer;
-import shattered.lib.InvocationIndex;
-import shattered.lib.RuntimeMetadata;
-import shattered.lib.ShatteredEntryPoint;
+import shattered.bridge.ClassTransformer;
+import shattered.bridge.InvocationIndex;
+import shattered.bridge.RuntimeMetadata;
+import shattered.bridge.ShatteredEntryPoint;
 
 public final class Bootstrap {
 

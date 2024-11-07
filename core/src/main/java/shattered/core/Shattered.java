@@ -1,6 +1,6 @@
 package shattered.core;
 
-import shattered.lib.ShatteredEntryPoint;
+import shattered.bridge.ShatteredEntryPoint;
 
 @ShatteredEntryPoint
 public final class Shattered {

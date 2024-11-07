@@ -1,4 +1,4 @@
-package shattered.lib;
+package shattered.bridge;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;

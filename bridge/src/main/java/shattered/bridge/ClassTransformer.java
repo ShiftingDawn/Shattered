@@ -1,4 +1,4 @@
-package shattered.lib;
+package shattered.bridge;
 
 import org.objectweb.asm.tree.ClassNode;
 
