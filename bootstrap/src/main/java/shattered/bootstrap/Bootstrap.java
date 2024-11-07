@@ -4,10 +4,8 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,6 +28,7 @@ public final class Bootstrap {
 			final File selfFile = new File(self.toURI());
 			final Map<String, byte[]> classData = ClassFinder.loadClasses(selfFile.getAbsolutePath());
 			final Map<String, List<String>> loadingTree = Bootstrap.makeClassLoadingTree(classData);
+			loadingTree.keySet().forEach(className -> Bootstrap.registerClassTransformers(className, classData.get(className)));
 			loadingTree.keySet().forEach(className -> Bootstrap.processClassRecursive(loadingTree, classData, className));
 			final String[] bootClasses = RuntimeMetadata.getAnnotatedClasses(ShatteredEntryPoint.class);
 			if (bootClasses.length != 1) {
@@ -84,18 +83,26 @@ public final class Bootstrap {
 		return null;
 	}
 
+	private static void registerClassTransformers(final String classToLoad, byte[] classData) {
+		final ClassReader reader = new ClassReader(classData);
+		final ClassNode node = new ClassNode(Opcodes.ASM9);
+		reader.accept(node, 0);
+		if (node.interfaces.contains(Type.getInternalName(ClassTransformer.class))) {
+			TransformerRegistry.registerTransformer(classToLoad, node);
+		}
+	}
+
 	private static void processClassRecursive(final Map<String, List<String>> dependencyTree, final Map<String, byte[]> classData, final String classToLoad) {
 		final List<String> parents = dependencyTree.get(classToLoad);
 		parents.forEach(parentClass -> Bootstrap.processClassRecursive(dependencyTree, classData, parentClass));
 		final ClassReader reader = new ClassReader(classData.get(classToLoad));
 		final ClassNode node = new ClassNode(Opcodes.ASM9);
 		reader.accept(node, 0);
-		if (node.interfaces.contains(Type.getInternalName(ClassTransformer.class))) {
-			TransformerRegistry.registerTransformer(classToLoad, node);
-			return;
-		}
 		if (node.visibleAnnotations != null) {
 			node.visibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), classToLoad));
+		}
+		if (node.invisibleAnnotations != null) {
+			node.invisibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), classToLoad));
 		}
 		Bootstrap.LOADER.defineClassIfMissing(classToLoad, classData.get(classToLoad));
 	}

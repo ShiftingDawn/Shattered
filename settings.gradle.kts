@@ -6,6 +6,7 @@ plugins {
 val asm = "9.7.1"
 
 // Libs
+val annotations = "26.0.1"
 val fastutil = "8.5.15"
 val gson = "2.11.0"
 
@@ -14,8 +15,10 @@ dependencyResolutionManagement {
         val asmVersion = version("asm", asm)
         library("asm", "org.ow2.asm", "asm").versionRef(asmVersion)
         library("asmTree", "org.ow2.asm", "asm-tree").versionRef(asmVersion)
+        library("asmUtil", "org.ow2.asm", "asm-util").versionRef(asmVersion)
     }
     versionCatalogs.create("libs") {
+        library("annotations", "org.jetbrains", "annotations").versionRef(version("annotations", annotations))
         library("fastutil", "it.unimi.dsi", "fastutil").versionRef(version("fastutil", fastutil))
         library("gson", "com.google.code.gson", "gson").versionRef(version("gson", gson))
     }

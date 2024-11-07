@@ -12,6 +12,7 @@ dependencies {
     compileOnly(project(":bridge"))
     implementation(project.core.asm)
     implementation(project.core.asmTree)
+    implementation(project.core.asmUtil)
 
     implementation(project(":lib"))
     implementation(project.libs.fastutil)

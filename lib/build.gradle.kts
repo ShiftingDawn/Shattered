@@ -1,5 +1,7 @@
 plugins {
     java
+    checkstyle
+    id("io.freefair.lombok") version "8.10.2"
 }
 
 repositories {
@@ -7,6 +9,9 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project(":bridge"))
+
+    implementation(project.libs.annotations)
 }
 
 java {
