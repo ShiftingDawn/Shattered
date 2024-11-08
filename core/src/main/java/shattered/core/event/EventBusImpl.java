@@ -11,10 +11,12 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
+import shattered.bridge.RuntimeMetadata;
 import shattered.lib.FileHelper;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
 import shattered.lib.event.EventBus;
+import shattered.lib.event.EventBusSubscriber;
 import shattered.lib.event.Subscribe;
 
 public class EventBusImpl implements EventBus {
@@ -31,6 +33,18 @@ public class EventBusImpl implements EventBus {
 			EventBusImpl.DUMP_CLASSES_DIR.mkdirs();
 		}
 		Internal.DEFAULT_EVENT_BUS = EventBusImpl.INSTANCE;
+		final String[] classNamesToSubscribe = RuntimeMetadata.getAnnotatedClasses(EventBusSubscriber.class);
+		for (final String className : classNamesToSubscribe) {
+			try {
+				final Class<?> clazz = Class.forName(className);
+				EventBusImpl.INSTANCE.register(clazz);
+				//TODO debug log
+			} catch (final ClassNotFoundException e) {
+				//TODO better logging
+				System.err.println("Could not register event listener class " + className);
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
