@@ -23,6 +23,7 @@ public final class Bootstrap {
 
 	static final Logger LOGGER = LogManager.getLogger("Shattered");
 	static final BootstrapClassLoader LOADER = new BootstrapClassLoader();
+	static final File ROOT_DIR = BootstrapWorkspace.getRootDir();
 
 	static {
 		Thread.currentThread().setContextClassLoader(Bootstrap.LOADER);
@@ -50,7 +51,10 @@ public final class Bootstrap {
 		try {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
-			constructor.newInstance((Object) args);
+			final String[] newArgs = new String[args.length + 1];
+			newArgs[0] = Bootstrap.ROOT_DIR.getAbsolutePath();
+			System.arraycopy(args, 0, newArgs, 1, args.length);
+			constructor.newInstance((Object) newArgs);
 		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
 			Bootstrap.LOGGER.fatal("Could not execute Shattered EntryPoint");
 			System.exit(-1);
