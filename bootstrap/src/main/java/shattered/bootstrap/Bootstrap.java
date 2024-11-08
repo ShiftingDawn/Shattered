@@ -6,9 +6,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -20,81 +21,61 @@ import shattered.bridge.ShatteredEntryPoint;
 
 public final class Bootstrap {
 
+	static final Logger LOGGER = LogManager.getLogger("Shattered");
 	static final BootstrapClassLoader LOADER = new BootstrapClassLoader();
-	static final File ROOT_DIR = BootstrapWorkspace.getRootDir();
+
+	static {
+		Thread.currentThread().setContextClassLoader(Bootstrap.LOADER);
+	}
 
 	public static void init(final String[] args) {
+		Bootstrap.LOGGER.info("Bootstrapping Shattered!");
 		try {
-			Bootstrap.LOADER.registerClass(InvocationIndex.class);
-			Bootstrap.LOADER.registerClass(RuntimeMetadata.class);
-
 			final URL self = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
 			final File selfFile = new File(self.toURI());
 			final Map<String, byte[]> classData = ClassFinder.loadClasses(selfFile.getAbsolutePath());
-			final Map<String, List<String>> loadingTree = Bootstrap.makeClassLoadingTree(classData);
-			loadingTree.keySet().forEach(className -> Bootstrap.registerClassTransformers(className, classData.get(className)));
-			loadingTree.keySet().forEach(className -> Bootstrap.processClassRecursive(loadingTree, classData, className));
+			classData.keySet().forEach(className -> Bootstrap.registerClassTransformers(className, classData.get(className)));
+			classData.keySet().forEach(className -> classData.put(className, TransformerRegistry.transform(className, classData.get(className))));
+			BootstrapClassLoader.CLASS_DATA.putAll(classData);
+			Bootstrap.processClasses(classData);
 		} catch (final Exception e) {
-			throw new BootstrapException(e.getMessage());
+			Bootstrap.LOGGER.fatal("An error occurred while bootstrapping Shattered: {}", e.getMessage());
+			System.exit(-1);
 		}
 		final String[] bootClasses = RuntimeMetadata.getAnnotatedClasses(ShatteredEntryPoint.class);
 		if (bootClasses.length != 1) {
-			throw new RuntimeException();
+			Bootstrap.LOGGER.fatal("Could not find Shattered EntryPoint");
+			System.exit(-1);
 		}
 		try {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
-			final String[] newArgs = new String[args.length + 1];
-			newArgs[0] = Bootstrap.ROOT_DIR.getAbsolutePath();
-			System.arraycopy(args, 0, newArgs, 1, args.length);
-			constructor.newInstance((Object) newArgs);
-		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-			throw new RuntimeException(e);
+			constructor.newInstance((Object) args);
+		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
+			Bootstrap.LOGGER.fatal("Could not execute Shattered EntryPoint");
+			System.exit(-1);
 		} catch (final InvocationTargetException e) {
 			final Throwable ex = e.getCause();
-			throw ex instanceof final RuntimeException re ? re : new RuntimeException(ex);
+			Bootstrap.modifyStackTrace(ex);
+			Bootstrap.LOGGER.atFatal().withThrowable(ex).log("An error occured, Shattered will now exit");
+			System.exit(-1);
 		}
 	}
 
-	private static Map<String, List<String>> makeClassLoadingTree(final Map<String, byte[]> classData) {
-		final Map<String, List<String>> parentClassMapping = new HashMap<>();
-		for (final Map.Entry<String, byte[]> entry : classData.entrySet()) {
-			Bootstrap.addDependenciesToTree(parentClassMapping, entry.getKey(), entry.getValue());
-		}
-		for (final String name : parentClassMapping.keySet()) {
-			final String unresolved = Bootstrap.getMissingDependencies(parentClassMapping, name);
-			if (unresolved != null) {
-				throw new RuntimeException("Cannot resolve class " + name + "because of missing dependency: " + unresolved);
+	private static void modifyStackTrace(final Throwable e) {
+		final List<StackTraceElement> newTrace = new ArrayList<>();
+		int selfIndex = -1;
+		for (int i = 0; i < e.getStackTrace().length; ++i) {
+			if (e.getStackTrace()[i].getClassName().equals(Bootstrap.class.getName())) {
+				selfIndex = i;
+				break;
 			}
 		}
-		return parentClassMapping;
-	}
-
-	private static void addDependenciesToTree(final Map<String, List<String>> tree, final String className, final byte[] classData) {
-		final ClassReader reader = new ClassReader(classData);
-		final List<String> dependencies = tree.computeIfAbsent(className, k -> new ArrayList<>());
-		if (!Bootstrap.LOADER.hasParentLoaded(reader.getSuperName().replace('/', '.'))) {
-			dependencies.add(reader.getSuperName().replace('/', '.'));
+		for (int i = 0; i < selfIndex - 3; ++i) {
+			newTrace.add(e.getStackTrace()[i]);
 		}
-		for (final String name : reader.getInterfaces()) {
-			if (!Bootstrap.LOADER.hasParentLoaded(name.replace('/', '.'))) {
-				dependencies.add(name.replace('/', '.'));
-			}
-		}
-	}
-
-	private static String getMissingDependencies(final Map<String, List<String>> map, final String name) {
-		final List<String> parents = map.get(name);
-		if (parents == null) {
-			return name;
-		}
-		for (final String dependency : parents) {
-			final String result = Bootstrap.getMissingDependencies(map, dependency);
-			if (result != null) {
-				return result;
-			}
-		}
-		return null;
+		newTrace.add(e.getStackTrace()[selfIndex]);
+		e.setStackTrace(newTrace.toArray(new StackTraceElement[0]));
 	}
 
 	private static void registerClassTransformers(final String classToLoad, final byte[] classData) {
@@ -106,19 +87,18 @@ public final class Bootstrap {
 		}
 	}
 
-	private static void processClassRecursive(final Map<String, List<String>> dependencyTree, final Map<String, byte[]> classData, final String classToLoad) {
-		final List<String> parents = dependencyTree.get(classToLoad);
-		parents.forEach(parentClass -> Bootstrap.processClassRecursive(dependencyTree, classData, parentClass));
-		final ClassReader reader = new ClassReader(classData.get(classToLoad));
-		final ClassNode node = new ClassNode(Opcodes.ASM9);
-		reader.accept(node, 0);
-		if (node.visibleAnnotations != null) {
-			node.visibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), classToLoad));
-		}
-		if (node.invisibleAnnotations != null) {
-			node.invisibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), classToLoad));
-		}
-		Bootstrap.LOADER.defineClassIfMissing(classToLoad, classData.get(classToLoad));
+	private static void processClasses(final Map<String, byte[]> classData) {
+		classData.forEach((className, classBytes) -> {
+			final ClassReader reader = new ClassReader(classBytes);
+			final ClassNode node = new ClassNode(Opcodes.ASM9);
+			reader.accept(node, 0);
+			if (node.visibleAnnotations != null) {
+				node.visibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), className));
+			}
+			if (node.invisibleAnnotations != null) {
+				node.invisibleAnnotations.forEach(annotationNode -> Bootstrap.registerAnnotatedClass(Type.getType(annotationNode.desc).getClassName(), className));
+			}
+		});
 	}
 
 	private static Map<String, List<String>> annotationMetaMap;

@@ -11,6 +11,7 @@ dependencies {
     runtimeOnly(project(":core"))
     implementation(project.core.asm)
     implementation(project.core.asmTree)
+    implementation(project.core.log4j)
 }
 
 java {
@@ -23,8 +24,11 @@ application {
     mainClass = "Main"
 
     applicationDefaultJvmArgs = listOf(
-        "-Dshattered.workspace.root=$rootDir/run",
         "-Dshattered.bootstrap.dumpclasses=true",
         "-Dshattered.eventbus.dumpclasses=true"
     )
+
+    val runDir = File("$rootDir/run")
+    runDir.mkdirs()
+    tasks.run.get().workingDir = runDir
 }
