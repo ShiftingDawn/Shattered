@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Properties>
+        <Property name="logger_pattern">[%-10logger] %-5p %d [%t] : %m{nolookups}%n</Property>
+    </Properties>
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <Filters>
+                <ThresholdFilter level="ALL"/>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <PatternLayout pattern="${logger_pattern}"/>
+        </Console>
+        <Console name="STDERR" target="SYSTEM_ERR">
+            <PatternLayout pattern="${logger_pattern}"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="STDERR" level="WARN"/>
+        </Root>
+    </Loggers>
+</Configuration>

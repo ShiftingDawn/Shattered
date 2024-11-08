@@ -4,6 +4,8 @@ plugins {
 
 // Core
 val asm = "9.7.1"
+val log4j = "2.24.1"
+
 
 // Libs
 val annotations = "26.0.1"
@@ -16,6 +18,7 @@ dependencyResolutionManagement {
         library("asm", "org.ow2.asm", "asm").versionRef(asmVersion)
         library("asmTree", "org.ow2.asm", "asm-tree").versionRef(asmVersion)
         library("asmUtil", "org.ow2.asm", "asm-util").versionRef(asmVersion)
+        library("log4j", "org.apache.logging.log4j", "log4j-core").versionRef(version("log4j", log4j))
     }
     versionCatalogs.create("libs") {
         library("annotations", "org.jetbrains", "annotations").versionRef(version("annotations", annotations))

@@ -11,6 +11,7 @@ dependencies {
     runtimeOnly(project(":core"))
     implementation(project.core.asm)
     implementation(project.core.asmTree)
+    implementation(project.core.log4j)
 }
 
 java {

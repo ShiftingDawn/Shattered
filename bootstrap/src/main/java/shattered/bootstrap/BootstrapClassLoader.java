@@ -5,38 +5,36 @@ import java.util.Map;
 
 final class BootstrapClassLoader extends ClassLoader {
 
-    private final Map<String, Class<?>> loadedClasses = new HashMap<>();
+	static final Map<String, byte[]> CLASS_DATA = new HashMap<>();
 
-    public BootstrapClassLoader() {
-        super(Bootstrap.class.getClassLoader().getParent());
-    }
+	public BootstrapClassLoader() {
+		super(Bootstrap.class.getClassLoader());
+	}
 
-    void registerClass(final Class<?> clazz) {
-        this.loadedClasses.put(clazz.getName(), clazz);
-    }
+	@Override
+	protected Class<?> findClass(final String name) throws ClassNotFoundException {
+		if (BootstrapClassLoader.CLASS_DATA.containsKey(name)) {
+			final byte[] data = BootstrapClassLoader.CLASS_DATA.get(name);
+			final Class<?> result = this.defineClass(name, data, 0, data.length);
+			BootstrapClassLoader.CLASS_DATA.remove(name);
+			return result;
+		}
+		throw new ClassNotFoundException(name);
+	}
 
-    @Override
-    protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-        final Class<?> existing = this.loadedClasses.get(name);
-        if (existing != null) {
-            return existing;
-        }
-        return super.loadClass(name, resolve);
-    }
-
-    boolean hasParentLoaded(final String name) {
-        try {
-            return this.getParent().loadClass(name) != null;
-        } catch (final ClassNotFoundException e) {
-            return false;
-        }
-    }
-
-    void defineClassIfMissing(final String className, byte[] data) {
-        if (!this.loadedClasses.containsKey(className)) {
-            data = TransformerRegistry.transform(className, data);
-            final Class<?> result = super.defineClass(className, data, 0, data.length);
-            this.loadedClasses.put(className, result);
-        }
-    }
+	@Override
+	protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+		Class<?> loadedClass = this.findLoadedClass(name);
+		if (loadedClass == null) {
+			try {
+				loadedClass = this.findClass(name);
+			} catch (final ClassNotFoundException e) {
+				loadedClass = super.loadClass(name, resolve);
+			}
+		}
+		if (resolve) {
+			this.resolveClass(loadedClass);
+		}
+		return loadedClass;
+	}
 }

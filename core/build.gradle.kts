@@ -13,6 +13,7 @@ dependencies {
     implementation(project.core.asm)
     implementation(project.core.asmTree)
     implementation(project.core.asmUtil)
+    implementation(project.core.log4j)
 
     implementation(project(":lib"))
     implementation(project.libs.annotations)
