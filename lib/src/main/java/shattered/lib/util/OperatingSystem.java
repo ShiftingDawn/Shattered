@@ -1,4 +1,4 @@
-package shattered.lib;
+package shattered.lib.util;
 
 import java.util.Locale;
 

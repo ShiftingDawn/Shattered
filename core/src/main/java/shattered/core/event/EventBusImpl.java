@@ -14,21 +14,22 @@ import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import shattered.bridge.RuntimeMetadata;
-import shattered.lib.FileHelper;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
 import shattered.lib.event.EventBus;
 import shattered.lib.event.EventBusSubscriber;
 import shattered.lib.event.Subscribe;
+import shattered.lib.util.FileHelper;
+import shattered.lib.util.Workspace;
 
 public class EventBusImpl implements EventBus {
 
 	public static final EventBusImpl INSTANCE = new EventBusImpl();
 	static final Logger LOGGER = LogManager.getLogger("EventBus");
 	static final boolean DUMP_CLASSES = Boolean.getBoolean("shattered.eventbus.dumpclasses");
-	static final File DUMP_CLASSES_DIR = EventBusImpl.DUMP_CLASSES ? new File("debug/eventbus/classdump") : null;
+	static final File DUMP_CLASSES_DIR = EventBusImpl.DUMP_CLASSES ? Workspace.makeDir("debug/eventbus/classdump").toFile() : null;
 	private final Object2ObjectMap<Object, List<EventHandler>> handlerMapping = new Object2ObjectArrayMap<>();
-	private final ObjectSortedSet<EventHandler> sortedHandlers = new ObjectRBTreeSet<>((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
+	private final ObjectSortedSet<EventHandler> sortedHandlers = new ObjectRBTreeSet<>((o1, o2) -> o1.getPriority() == o2.getPriority() ? -1 : Integer.compare(o2.getPriority(), o1.getPriority()));
 
 	public static void init() {
 		if (EventBusImpl.DUMP_CLASSES) {
