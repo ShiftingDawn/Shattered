@@ -21,11 +21,14 @@ import shattered.bridge.ShatteredEntryPoint;
 
 public final class Bootstrap {
 
-	static final Logger LOGGER = LogManager.getLogger("Shattered");
 	static final BootstrapClassLoader LOADER = new BootstrapClassLoader();
+	static final Logger LOGGER;
+	static final File ROOT_DIR = BootstrapWorkspace.getRootDir();
 
 	static {
 		Thread.currentThread().setContextClassLoader(Bootstrap.LOADER);
+		Bootstrap.addFileAppender();
+		LOGGER = LogManager.getLogger("Shattered");
 	}
 
 	public static void init(final String[] args) {
@@ -50,7 +53,10 @@ public final class Bootstrap {
 		try {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
-			constructor.newInstance((Object) args);
+			final String[] newArgs = new String[args.length + 1];
+			newArgs[0] = Bootstrap.ROOT_DIR.getAbsolutePath();
+			System.arraycopy(args, 0, newArgs, 1, args.length);
+			constructor.newInstance((Object) newArgs);
 		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
 			Bootstrap.LOGGER.fatal("Could not execute Shattered EntryPoint");
 			System.exit(-1);
@@ -60,6 +66,16 @@ public final class Bootstrap {
 			Bootstrap.LOGGER.atFatal().withThrowable(ex).log("An error occured, Shattered will now exit");
 			System.exit(-1);
 		}
+	}
+
+	private static void addFileAppender() {
+		final File logsDir = new File(Bootstrap.ROOT_DIR, "logs");
+		final String fullPath = new File(logsDir, "latest.log").getAbsolutePath();
+		System.setProperty("shattered.logfile", fullPath);
+		final String cleanedPath = logsDir.getAbsolutePath() + File.pathSeparator + "%d{yyyy-MM-dd}-%i.log.gz";
+		System.setProperty("shattered.logfileclean", cleanedPath);
+		final org.apache.logging.log4j.core.LoggerContext ctx = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
+		ctx.reconfigure();
 	}
 
 	private static void modifyStackTrace(final Throwable e) {

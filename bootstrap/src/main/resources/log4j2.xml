@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Properties>
-        <Property name="logger_pattern">[%-10logger] %-5p %d [%t] : %m{nolookups}%n</Property>
+        <Property name="logger_pattern">[%-10logger] %-5p %d [%t] : %msg{nolookups}%n</Property>
     </Properties>
     <Appenders>
         <Console name="STDOUT" target="SYSTEM_OUT">
@@ -14,11 +14,19 @@
         <Console name="STDERR" target="SYSTEM_ERR">
             <PatternLayout pattern="${logger_pattern}"/>
         </Console>
+        <RollingRandomAccessFile name="FILE" fileName="${sys:shattered.logfile}" filePattern="${sys:shattered.logfileclean}">
+            <PatternLayout pattern="${logger_pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <OnStartupTriggeringPolicy/>
+            </Policies>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Root level="INFO">
             <AppenderRef ref="STDOUT"/>
             <AppenderRef ref="STDERR" level="WARN"/>
+            <AppenderRef ref="FILE"/>
         </Root>
     </Loggers>
 </Configuration>

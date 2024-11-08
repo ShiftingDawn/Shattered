@@ -16,7 +16,7 @@ import java.util.TreeSet;
 public final class TransformerRegistry {
 
     private static final boolean DUMP_CLASSES = Boolean.getBoolean("shattered.bootstrap.dumpclasses");
-    private static final File DUMP_CLASSES_DIR = TransformerRegistry.DUMP_CLASSES ? new File("debug/bootstrap/classdump") : null;
+    private static final File DUMP_CLASSES_DIR = TransformerRegistry.DUMP_CLASSES ? new File(Bootstrap.ROOT_DIR, "debug/bootstrap/classdump") : null;
     private static final Set<ClassTransformer> TRANSFORMERS = new TreeSet<>((o1, o2) -> o1.priority() == o2.priority() ? -1 : Integer.compare(o2.priority(), o1.priority()));
 
     static {
