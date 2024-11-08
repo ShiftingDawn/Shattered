@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import shattered.lib.FileHelper;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
@@ -20,7 +22,8 @@ public class EventBusImpl implements EventBus {
 	public static final EventBusImpl INSTANCE = new EventBusImpl();
 	static final boolean DUMP_CLASSES = Boolean.getBoolean("shattered.eventbus.dumpclasses");
 	static final File DUMP_CLASSES_DIR = EventBusImpl.DUMP_CLASSES ? new File("debug/eventbus/classdump") : null;
-	private final Object2ObjectMap<Object, List<EventHandler>> handlers = new Object2ObjectArrayMap<>();
+	private final Object2ObjectMap<Object, List<EventHandler>> handlerMapping = new Object2ObjectArrayMap<>();
+	private final ObjectSortedSet<EventHandler> sortedHandlers = new ObjectRBTreeSet<>((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
 
 	public static void init() {
 		if (EventBusImpl.DUMP_CLASSES) {
@@ -33,7 +36,7 @@ public class EventBusImpl implements EventBus {
 	@Override
 	public void register(final Object object) {
 		Objects.requireNonNull(object);
-		if (this.handlers.containsKey(object)) {
+		if (this.handlerMapping.containsKey(object)) {
 			//TODO better logging
 			System.err.printf("Cannot register event listeners for already registered class %s%n", object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
 			new Exception().printStackTrace();
@@ -44,16 +47,28 @@ public class EventBusImpl implements EventBus {
 		for (final Method method : methods) {
 			eventHandlers.add(new EventHandler(method, object instanceof Class ? null : object));
 		}
-		this.handlers.put(object, Collections.unmodifiableList(eventHandlers));
+		this.handlerMapping.put(object, Collections.unmodifiableList(eventHandlers));
+		this.sortedHandlers.addAll(eventHandlers);
+	}
+
+	@Override
+	public void unregister(final Object object) {
+		Objects.requireNonNull(object);
+		if (!this.handlerMapping.containsKey(object)) {
+			//TODO better logging
+			System.err.printf("Cannot unregister event listeners for unregistered class %s%n", object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
+			new Exception().printStackTrace();
+			return;
+		}
+		this.sortedHandlers.removeAll(this.handlerMapping.get(object));
+		this.handlerMapping.remove(object);
 	}
 
 	@Override
 	public void post(final Event event) {
-		for (final List<EventHandler> handlers : this.handlers.values()) {
-			for (final EventHandler handler : handlers) {
-				if (handler.canPost(event)) {
-					handler.postEvent(event);
-				}
+		for (final EventHandler handler : this.sortedHandlers) {
+			if (handler.canPost(event)) {
+				handler.postEvent(event);
 			}
 		}
 	}

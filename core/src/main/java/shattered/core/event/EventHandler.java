@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
@@ -15,6 +16,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import shattered.lib.event.Event;
+import shattered.lib.event.Subscribe;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
@@ -37,12 +39,17 @@ public final class EventHandler implements EventDispatcher {
 	private static final String[] GENERATED_CLASS_INTERFACES = new String[] { Type.getInternalName(EventDispatcher.class) };
 	private static final Method HANDLE_METHOD = EventDispatcher.class.getDeclaredMethods()[0];
 
+	@Getter
+	private final Subscribe listenerInfo;
 	private final EventDispatcher dispatcher;
 	private final Class<?> filteredEvent;
 	@Nullable
 	private final Class<?>[] filteredEventGenerics;
+	@Getter
+	private final int priority;
 
 	public EventHandler(final Method eventListenerMethod, @Nullable final Object classInstance) {
+		this.listenerInfo = eventListenerMethod.getAnnotation(Subscribe.class);
 		final boolean isStatic = Modifier.isStatic(eventListenerMethod.getModifiers());
 		final String generatedClassName = eventListenerMethod.getDeclaringClass().getName().replace('.', '_') + "_" + eventListenerMethod.getName() + '_' + EventHandler.LISTENER_ID.getAndIncrement();
 
@@ -106,6 +113,7 @@ public final class EventHandler implements EventDispatcher {
 		} else {
 			this.filteredEventGenerics = null;
 		}
+		this.priority = this.listenerInfo.priority();
 	}
 
 	public boolean canPost(final Event event) {
