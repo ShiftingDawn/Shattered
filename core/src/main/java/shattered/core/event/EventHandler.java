@@ -1,9 +1,15 @@
 package shattered.core.event;
 
+import java.io.File;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -14,6 +20,7 @@ import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_SUPER;
 import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
@@ -31,8 +38,11 @@ public final class EventHandler implements EventDispatcher {
 	private static final Method HANDLE_METHOD = EventDispatcher.class.getDeclaredMethods()[0];
 
 	private final EventDispatcher dispatcher;
+	private final Class<?> filteredEvent;
+	@Nullable
+	private final Class<?>[] filteredEventGenerics;
 
-	public EventHandler(final Method eventListenerMethod, final Object classInstance) {
+	public EventHandler(final Method eventListenerMethod, @Nullable final Object classInstance) {
 		final boolean isStatic = Modifier.isStatic(eventListenerMethod.getModifiers());
 		final String generatedClassName = eventListenerMethod.getDeclaringClass().getName().replace('.', '_') + "_" + eventListenerMethod.getName() + '_' + EventHandler.LISTENER_ID.getAndIncrement();
 
@@ -71,6 +81,7 @@ public final class EventHandler implements EventDispatcher {
 				methodVisitor.visitFieldInsn(GETFIELD, generatedClassName, "instance", Type.getDescriptor(classInstance.getClass()));
 			}
 			methodVisitor.visitVarInsn(ALOAD, 1);
+			methodVisitor.visitTypeInsn(CHECKCAST, Type.getInternalName(eventListenerMethod.getParameterTypes()[0]));
 			methodVisitor.visitMethodInsn(isStatic ? INVOKESTATIC : INVOKEVIRTUAL, Type.getInternalName(eventListenerMethod.getDeclaringClass()), eventListenerMethod.getName(),
 					Type.getMethodDescriptor(eventListenerMethod), false);
 			methodVisitor.visitInsn(RETURN);
@@ -85,12 +96,56 @@ public final class EventHandler implements EventDispatcher {
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
 			throw new RuntimeException(e);
 		}
-		System.out.println();
+		this.filteredEvent = eventListenerMethod.getParameterTypes()[0];
+		if (eventListenerMethod.getGenericParameterTypes()[0] instanceof final ParameterizedType parameterizedType) {
+			this.filteredEventGenerics = new Class[parameterizedType.getActualTypeArguments().length];
+			for (int i = 0; i < this.filteredEventGenerics.length; ++i) {
+				final java.lang.reflect.Type generic = parameterizedType.getActualTypeArguments()[i];
+				this.filteredEventGenerics[i] = EventHandler.getRawType(generic);
+			}
+		} else {
+			this.filteredEventGenerics = null;
+		}
+	}
+
+	public boolean canPost(final Event event) {
+		if (!this.filteredEvent.isAssignableFrom(event.getClass())) {
+			return false;
+		}
+		final java.lang.reflect.Type genericSuperClass = event.getClass().getGenericSuperclass();
+		if (!(genericSuperClass instanceof final ParameterizedType parameterizedType)) {
+			return this.filteredEventGenerics == null;
+		}
+		if (this.filteredEventGenerics == null) {
+			return true;
+		}
+		if (this.filteredEventGenerics.length != parameterizedType.getActualTypeArguments().length) {
+			return false;
+		}
+		for (int i = 0; i < this.filteredEventGenerics.length; ++i) {
+			final Class<?> rawType = EventHandler.getRawType(parameterizedType.getActualTypeArguments()[i]);
+			if ((this.filteredEventGenerics[i] == null) != (rawType == null)) {
+				return false;
+			}
+			if (this.filteredEventGenerics[i] != null && !this.filteredEventGenerics[i].isAssignableFrom(rawType)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
 	public void postEvent(final Event event) {
 		this.dispatcher.postEvent(event);
+	}
+
+	private static Class<?> getRawType(final java.lang.reflect.Type type) {
+		return switch (type) {
+			case final Class<?> aClass -> aClass;
+			case final GenericArrayType genericArrayType -> EventHandler.getRawType(genericArrayType.getGenericComponentType());
+			case final ParameterizedType parameterizedType -> EventHandler.getRawType(parameterizedType.getRawType());
+			case null, default -> null;
+		};
 	}
 
 	private static class EventBusClassLoader extends ClassLoader {
@@ -104,7 +159,11 @@ public final class EventHandler implements EventDispatcher {
 			return Class.forName(name, resolve, EventBusClassLoader.class.getClassLoader());
 		}
 
+		@SneakyThrows
 		public Class<?> create(final String name, final byte[] data) {
+			if (EventBusImpl.DUMP_CLASSES) {
+				Files.write(new File(EventBusImpl.DUMP_CLASSES_DIR, "%s.class".formatted(name)).toPath(), data);
+			}
 			return this.defineClass(name, data, 0, data.length);
 		}
 	}

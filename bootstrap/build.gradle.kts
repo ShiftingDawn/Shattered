@@ -1,6 +1,5 @@
 plugins {
     application
-    checkstyle
 }
 
 repositories {
@@ -22,9 +21,10 @@ java {
 
 application {
     mainClass = "Main"
-}
 
-tasks.withType<Checkstyle>().configureEach {
-    configDirectory.set(layout.projectDirectory.dir("gradle"))
-    configFile = file("$rootDir/gradle/checkstyle.xml")
+    applicationDefaultJvmArgs = listOf("-Dshattered.eventbus.dumpclasses=true");
+
+    val runDir = File("$rootDir/run");
+    runDir.mkdirs();
+    tasks.run.get().workingDir = runDir
 }

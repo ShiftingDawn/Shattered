@@ -29,3 +29,6 @@ build
 .idea/httpRequests
 modules.xml
 .idea/libraries/Gradle*.xml
+
+### Shattered ###
+run

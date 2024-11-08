@@ -8,5 +8,7 @@ public interface EventBus {
 		return Internal.DEFAULT_EVENT_BUS;
 	}
 
-	void register(Object instance);
+	void register(Object object);
+
+	void post(Event event);
 }

@@ -44,8 +44,11 @@ public final class Bootstrap {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
 			constructor.newInstance((Object) args);
-		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);
+		} catch (final InvocationTargetException e) {
+			final Throwable ex = e.getCause();
+			throw ex instanceof final RuntimeException re ? re : new RuntimeException(ex);
 		}
 	}
 

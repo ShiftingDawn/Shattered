@@ -1,6 +1,5 @@
 plugins {
     java
-    checkstyle
     id("io.freefair.lombok") version "8.10.2"
 }
 
