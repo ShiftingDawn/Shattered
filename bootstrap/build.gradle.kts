@@ -22,9 +22,12 @@ java {
 application {
     mainClass = "Main"
 
-    applicationDefaultJvmArgs = listOf("-Dshattered.eventbus.dumpclasses=true");
+    applicationDefaultJvmArgs = listOf(
+        "-Dshattered.bootstrap.dumpclasses=true",
+        "-Dshattered.eventbus.dumpclasses=true"
+    )
 
-    val runDir = File("$rootDir/run");
-    runDir.mkdirs();
+    val runDir = File("$rootDir/run")
+    runDir.mkdirs()
     tasks.run.get().workingDir = runDir
 }

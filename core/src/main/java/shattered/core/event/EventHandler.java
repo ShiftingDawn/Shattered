@@ -31,7 +31,7 @@ import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.RETURN;
 import static org.objectweb.asm.Opcodes.V21;
 
-public final class EventHandler implements EventDispatcher {
+final class EventHandler implements EventDispatcher {
 
 	private static final AtomicLong LISTENER_ID = new AtomicLong(0);
 	private static final EventBusClassLoader LOADER = new EventBusClassLoader();
