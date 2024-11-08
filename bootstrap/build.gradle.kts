@@ -23,11 +23,8 @@ application {
     mainClass = "Main"
 
     applicationDefaultJvmArgs = listOf(
+        "-Dshattered.workspace.root=$rootDir/run",
         "-Dshattered.bootstrap.dumpclasses=true",
         "-Dshattered.eventbus.dumpclasses=true"
     )
-
-    val runDir = File("$rootDir/run")
-    runDir.mkdirs()
-    tasks.run.get().workingDir = runDir
 }

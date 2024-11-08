@@ -21,6 +21,7 @@ import shattered.bridge.ShatteredEntryPoint;
 public final class Bootstrap {
 
 	static final BootstrapClassLoader LOADER = new BootstrapClassLoader();
+	static final File ROOT_DIR = BootstrapWorkspace.getRootDir();
 
 	public static void init(final String[] args) {
 		try {
@@ -43,7 +44,10 @@ public final class Bootstrap {
 		try {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
-			constructor.newInstance((Object) args);
+			final String[] newArgs = new String[args.length + 1];
+			newArgs[0] = Bootstrap.ROOT_DIR.getAbsolutePath();
+			System.arraycopy(args, 0, newArgs, 1, args.length);
+			constructor.newInstance((Object) newArgs);
 		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		} catch (final InvocationTargetException e) {
