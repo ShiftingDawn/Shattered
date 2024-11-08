@@ -8,6 +8,11 @@ public class EventBusImpl implements EventBus {
 	public static final EventBusImpl INSTANCE = new EventBusImpl();
 
 	public static void init() {
-		Internal.DEFAULT_EVENT_BUS = INSTANCE;
+		Internal.DEFAULT_EVENT_BUS = EventBusImpl.INSTANCE;
+	}
+
+	@Override
+	public void register(final Object instance) {
+
 	}
 }

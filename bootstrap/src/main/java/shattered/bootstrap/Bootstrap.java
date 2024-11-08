@@ -3,9 +3,12 @@ package shattered.bootstrap;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,15 +33,19 @@ public final class Bootstrap {
 			final Map<String, List<String>> loadingTree = Bootstrap.makeClassLoadingTree(classData);
 			loadingTree.keySet().forEach(className -> Bootstrap.registerClassTransformers(className, classData.get(className)));
 			loadingTree.keySet().forEach(className -> Bootstrap.processClassRecursive(loadingTree, classData, className));
-			final String[] bootClasses = RuntimeMetadata.getAnnotatedClasses(ShatteredEntryPoint.class);
-			if (bootClasses.length != 1) {
-				throw new RuntimeException();
-			}
+		} catch (final Exception e) {
+			throw new BootstrapException(e.getMessage());
+		}
+		final String[] bootClasses = RuntimeMetadata.getAnnotatedClasses(ShatteredEntryPoint.class);
+		if (bootClasses.length != 1) {
+			throw new RuntimeException();
+		}
+		try {
 			final Constructor<?> constructor = Bootstrap.LOADER.loadClass(bootClasses[0]).getDeclaredConstructor(String[].class);
 			constructor.setAccessible(true);
 			constructor.newInstance((Object) args);
-		} catch (final Exception e) {
-			throw new BootstrapException(e.getMessage());
+		} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -83,7 +90,7 @@ public final class Bootstrap {
 		return null;
 	}
 
-	private static void registerClassTransformers(final String classToLoad, byte[] classData) {
+	private static void registerClassTransformers(final String classToLoad, final byte[] classData) {
 		final ClassReader reader = new ClassReader(classData);
 		final ClassNode node = new ClassNode(Opcodes.ASM9);
 		reader.accept(node, 0);

@@ -1,10 +1,14 @@
 package shattered.core.event;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 import shattered.bridge.ClassTransformer;
-import shattered.lib.event.EventBusSubscriber;
 import shattered.lib.event.Subscribe;
 
 final class SubscribeClassTransformer implements ClassTransformer {
@@ -12,30 +16,31 @@ final class SubscribeClassTransformer implements ClassTransformer {
 	private static final String DESC = Type.getDescriptor(Subscribe.class);
 
 	@Override
-	public boolean canTransform(ClassNode node) {
-		return node.methods.stream().anyMatch(m -> m.visibleAnnotations.stream().anyMatch(a -> a.desc.equals(DESC)));
+	public boolean canTransform(final ClassNode node) {
+		return node.methods.stream().anyMatch(m -> m.visibleAnnotations != null && m.visibleAnnotations.stream().anyMatch(a -> a.desc.equals(SubscribeClassTransformer.DESC)));
 	}
 
 	@Override
-	public byte[] transform(byte[] data) {
-		ClassReader reader = new ClassReader(data);
-		ClassNode node = new ClassNode();
+	public byte[] transform(final byte[] data) {
+		final ClassReader reader = new ClassReader(data);
+		final ClassNode node = new ClassNode();
 		reader.accept(node, 0);
 
-		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		CheckClassAdapter adapter = new CheckClassAdapter(writer);
+		final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		final CheckClassAdapter adapter = new CheckClassAdapter(writer);
 		node.accept(new ClassVisitor(Opcodes.ASM9, adapter) {
+
 			@Override
-			public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-				int newAccess = (access & ~Opcodes.ACC_PRIVATE & ~Opcodes.ACC_PROTECTED) | Opcodes.ACC_PUBLIC;
+			public void visit(final int version, final int access, final String name, final String signature, final String superName, final String[] interfaces) {
+				final int newAccess = (access & ~Opcodes.ACC_PRIVATE & ~Opcodes.ACC_PROTECTED) | Opcodes.ACC_PUBLIC;
 				super.visit(version, newAccess, name, signature, superName, interfaces);
 			}
 
 			@Override
-			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-				for (var methodNode : node.methods) {
+			public MethodVisitor visitMethod(final int access, final String name, final String descriptor, final String signature, final String[] exceptions) {
+				for (final var methodNode : node.methods) {
 					if (methodNode.name.equals(name) && methodNode.desc.equals(descriptor)) {
-						int newAccess = (access & ~Opcodes.ACC_PRIVATE & ~Opcodes.ACC_PROTECTED) | Opcodes.ACC_PUBLIC;
+						final int newAccess = (access & ~Opcodes.ACC_PRIVATE & ~Opcodes.ACC_PROTECTED) | Opcodes.ACC_PUBLIC;
 						return super.visitMethod(newAccess, name, descriptor, signature, exceptions);
 					}
 				}
