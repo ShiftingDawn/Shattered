@@ -6,8 +6,9 @@ plugins {
 val asm = "9.7.1"
 val log4j = "2.24.1"
 
-
 // Libs
+val lwjgl = "3.3.4"
+val joml = "1.10.7"
 val annotations = "26.0.1"
 val fastutil = "8.5.15"
 val gson = "2.11.0"
@@ -24,6 +25,8 @@ dependencyResolutionManagement {
         library("annotations", "org.jetbrains", "annotations").versionRef(version("annotations", annotations))
         library("fastutil", "it.unimi.dsi", "fastutil").versionRef(version("fastutil", fastutil))
         library("gson", "com.google.code.gson", "gson").versionRef(version("gson", gson))
+        library("lwjgl", "org.lwjgl", "lwjgl-bom").versionRef(version("lwjgl", lwjgl))
+        library("joml", "org.joml", "joml").versionRef(version("joml", joml));
     }
 }
 
