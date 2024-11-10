@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import static shattered.bootstrap.Bootstrap.LOGGER;
 
 final class ClassFinder {
 
@@ -26,6 +27,7 @@ final class ClassFinder {
 			if (!f.exists()) {
 				continue;
 			}
+			LOGGER.debug("Scanning classpath element: {}", path);
 			if (f.isDirectory()) {
 				final Map<String, byte[]> dirClasses = new HashMap<>();
 				ClassFinder.loadDirContents(f, dirClasses, null);
@@ -44,6 +46,7 @@ final class ClassFinder {
 				ClassFinder.loadDirContents(file, map, (path != null ? path + "." + name : name));
 			} else if (name.endsWith(".class") && ClassFinder.IGNORED_NAMES.stream().noneMatch(name::equals)) {
 				final String newName = (path != null ? path + "." : "") + name.replaceAll("/", ".").replace(".class", "");
+				LOGGER.trace("\tFound class: {}", newName);
 				map.put(newName, Files.readAllBytes(file.toPath()));
 			}
 		}
@@ -57,6 +60,7 @@ final class ClassFinder {
 				final String name = entry.getRealName();
 				if (!entry.isDirectory() && name.endsWith(".class") && ClassFinder.IGNORED_NAMES.stream().noneMatch(name::endsWith)) {
 					final String newName = name.replaceAll("/", ".").replace(".class", "");
+					LOGGER.trace("\tFound class: {}", newName);
 					result.put(newName, input.readAllBytes());
 				}
 			}

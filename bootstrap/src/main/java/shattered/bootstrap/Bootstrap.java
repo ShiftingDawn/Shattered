@@ -46,6 +46,7 @@ public final class Bootstrap {
 			System.exit(-1);
 		}
 		final String[] bootClasses = RuntimeMetadata.getAnnotatedClasses(ShatteredEntryPoint.class);
+		Bootstrap.LOGGER.debug("EntryPoints found: {}", (Object) bootClasses);
 		if (bootClasses.length != 1) {
 			Bootstrap.LOGGER.fatal("Could not find Shattered EntryPoint");
 			System.exit(-1);
@@ -63,7 +64,7 @@ public final class Bootstrap {
 		} catch (final InvocationTargetException e) {
 			final Throwable ex = e.getCause();
 			Bootstrap.modifyStackTrace(ex);
-			Bootstrap.LOGGER.atFatal().withThrowable(ex).log("An error occured, Shattered will now exit");
+			Bootstrap.LOGGER.atFatal().withThrowable(ex).log("An error occurred, Shattered will now exit");
 			System.exit(-1);
 		}
 	}
