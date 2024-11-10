@@ -21,7 +21,7 @@ public final class Runtime {
 		this.renderContext.destroy();
 	}
 
-	public void stop() {
+	void stop() {
 		this.RUNNING.set(false);
 	}
 }

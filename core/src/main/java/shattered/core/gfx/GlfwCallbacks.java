@@ -12,7 +12,7 @@ final class GlfwCallbacks {
 			Display.windowHeight = height;
 		});
 		glfwSetWindowCloseCallback(windowId, ignored -> {
-			Shattered.getShattered().getRuntime().stop();
+			Shattered.getShattered().stop();
 		});
 	}
 }

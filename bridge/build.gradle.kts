@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     compileOnly(project.core.asmTree)
+    compileOnly(project.core.asmUtil)
 }
 
 java {

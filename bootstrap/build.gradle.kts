@@ -24,6 +24,7 @@ application {
     mainClass = "Main"
 
     applicationDefaultJvmArgs = listOf(
+        "-Dshattered.log.level=TRACE",
         "-Dshattered.workspace.root=$rootDir/run",
         "-Dshattered.bootstrap.dumpclasses=true",
         "-Dshattered.eventbus.dumpclasses=true"

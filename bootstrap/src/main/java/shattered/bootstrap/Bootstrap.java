@@ -71,9 +71,9 @@ public final class Bootstrap {
 	private static void addFileAppender() {
 		final File logsDir = new File(Bootstrap.ROOT_DIR, "logs");
 		final String fullPath = new File(logsDir, "latest.log").getAbsolutePath();
-		System.setProperty("shattered.logfile", fullPath);
+		System.setProperty("shattered.log.file", fullPath);
 		final String cleanedPath = logsDir.getAbsolutePath() + File.separator + "%d{yyyy-MM-dd}-%i.log.gz";
-		System.setProperty("shattered.logfileclean", cleanedPath);
+		System.setProperty("shattered.log.archive", cleanedPath);
 		final org.apache.logging.log4j.core.LoggerContext ctx = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
 		ctx.reconfigure();
 	}

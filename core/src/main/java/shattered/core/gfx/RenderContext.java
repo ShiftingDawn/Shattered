@@ -12,17 +12,21 @@ import static org.lwjgl.opengl.GL11.glClearColor;
 public final class RenderContext {
 
 	private long windowId;
+	private Shader shader;
 
 	public RenderContext() {
 	}
 
 	public void init(final long windowId) {
+		Display.openWindow();
 		this.windowId = windowId;
 
 		glfwMakeContextCurrent(windowId);
 		GL.createCapabilities();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+		this.shader = new Shader("default", "default");
 	}
 
 	public void render() {
