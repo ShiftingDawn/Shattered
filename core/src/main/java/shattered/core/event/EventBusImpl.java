@@ -24,29 +24,16 @@ import shattered.lib.util.Workspace;
 
 public class EventBusImpl implements EventBus {
 
-	public static final EventBusImpl INSTANCE = new EventBusImpl();
+	private static final Object2ObjectMap<String, EventBus> EVENT_BUS_CACHE = new Object2ObjectArrayMap<>();
 	static final Logger LOGGER = LogManager.getLogger("EventBus");
 	static final boolean DUMP_CLASSES = Boolean.getBoolean("shattered.eventbus.dumpclasses");
 	static final File DUMP_CLASSES_DIR = EventBusImpl.DUMP_CLASSES ? Workspace.makeDir("debug/eventbus/classdump").toFile() : null;
 	private final Object2ObjectMap<Object, List<EventHandler>> handlerMapping = new Object2ObjectArrayMap<>();
 	private final ObjectSortedSet<EventHandler> sortedHandlers = new ObjectRBTreeSet<>((o1, o2) -> o1.getPriority() == o2.getPriority() ? -1 : Integer.compare(o2.getPriority(), o1.getPriority()));
+	private final String busName;
 
-	public static void init() {
-		if (EventBusImpl.DUMP_CLASSES) {
-			FileHelper.deleteRecursive(EventBusImpl.DUMP_CLASSES_DIR);
-			EventBusImpl.DUMP_CLASSES_DIR.mkdirs();
-		}
-		Internal.DEFAULT_EVENT_BUS = EventBusImpl.INSTANCE;
-		final String[] classNamesToSubscribe = RuntimeMetadata.getAnnotatedClasses(EventBusSubscriber.class);
-		for (final String className : classNamesToSubscribe) {
-			try {
-				final Class<?> clazz = Class.forName(className);
-				EventBusImpl.INSTANCE.register(clazz);
-				EventBusImpl.LOGGER.debug("Registered @{} annotated class {}", EventBusSubscriber.class.getSimpleName(), className);
-			} catch (final ClassNotFoundException e) {
-				EventBusImpl.LOGGER.atError().withThrowable(e).log("Could not register event listener class {}", className);
-			}
-		}
+	private EventBusImpl(final String busName) {
+		this.busName = busName.trim();
 	}
 
 	@Override
@@ -54,7 +41,7 @@ public class EventBusImpl implements EventBus {
 		Objects.requireNonNull(object);
 		if (this.handlerMapping.containsKey(object)) {
 			EventBusImpl.LOGGER.atError().withThrowable(new Exception())
-					.log("Cannot register event listeners for already registered class {}", object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
+					.log("[{}]Cannot register event listeners for already registered class {}", this.busName, object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
 			return;
 		}
 		final Method[] methods = EventBusImpl.findListenerMethods(object);
@@ -71,7 +58,7 @@ public class EventBusImpl implements EventBus {
 		Objects.requireNonNull(object);
 		if (!this.handlerMapping.containsKey(object)) {
 			EventBusImpl.LOGGER.atError().withThrowable(new Exception())
-					.log("\"Cannot unregister event listeners for unregistered class {}", object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
+					.log("[{}]Cannot unregister event listeners for unregistered class {}", this.busName, object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
 			return;
 		}
 		this.sortedHandlers.removeAll(this.handlerMapping.get(object));
@@ -83,6 +70,25 @@ public class EventBusImpl implements EventBus {
 		for (final EventHandler handler : this.sortedHandlers) {
 			if (handler.canPost(event)) {
 				handler.postEvent(event);
+			}
+		}
+	}
+
+	public static void init() {
+		if (EventBusImpl.DUMP_CLASSES) {
+			FileHelper.deleteRecursive(EventBusImpl.DUMP_CLASSES_DIR);
+			EventBusImpl.DUMP_CLASSES_DIR.mkdirs();
+		}
+		Internal.EVENT_BUS_GENERATOR = EventBusImpl::getOrCreateBus;
+		final String[] classNamesToSubscribe = RuntimeMetadata.getAnnotatedClasses(EventBusSubscriber.class);
+		for (final String className : classNamesToSubscribe) {
+			try {
+				final Class<?> clazz = Class.forName(className);
+				final String busName = clazz.getDeclaredAnnotation(EventBusSubscriber.class).value();
+				EventBusImpl.getOrCreateBus(busName).register(clazz);
+				EventBusImpl.LOGGER.debug("Registered @{} annotated class {} in bus {}", EventBusSubscriber.class.getSimpleName(), className, busName);
+			} catch (final ClassNotFoundException e) {
+				EventBusImpl.LOGGER.atError().withThrowable(e).log("Could not register event listener class {}", className);
 			}
 		}
 	}
@@ -112,5 +118,13 @@ public class EventBusImpl implements EventBus {
 			result.add(method);
 		}
 		return result.toArray(Method[]::new);
+	}
+
+	private static EventBus getOrCreateBus(String busName) {
+		if (busName == null || busName.trim().isBlank()) {
+			busName = "default";
+		}
+		busName = busName.trim();
+		return EventBusImpl.EVENT_BUS_CACHE.computeIfAbsent(busName, EventBusImpl::new);
 	}
 }

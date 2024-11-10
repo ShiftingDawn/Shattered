@@ -26,6 +26,7 @@ public final class Shattered {
 
 	private Shattered(final String[] args) {
 		Shattered.shattered = this;
+		Internal.NAME = Shattered.NAME;
 		Internal.ROOT_PATH = Paths.get(args[0]).toAbsolutePath();
 		//TODO handle args
 		this.init();
