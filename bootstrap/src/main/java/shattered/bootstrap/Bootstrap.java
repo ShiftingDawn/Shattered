@@ -21,7 +21,7 @@ import shattered.bridge.ShatteredEntryPoint;
 
 public final class Bootstrap {
 
-	static final BootstrapClassLoader LOADER = new BootstrapClassLoader();
+	static final BootstrapClassLoader LOADER = new BootstrapClassLoader(Bootstrap.class.getClassLoader());
 	static final Logger LOGGER;
 	static final File ROOT_DIR = BootstrapWorkspace.getRootDir();
 
@@ -38,8 +38,13 @@ public final class Bootstrap {
 			final File selfFile = new File(self.toURI());
 			final Map<String, byte[]> classData = ClassFinder.loadClasses(selfFile.getAbsolutePath());
 			classData.keySet().forEach(className -> Bootstrap.registerClassTransformers(className, classData.get(className)));
-			classData.keySet().forEach(className -> classData.put(className, TransformerRegistry.transform(className, classData.get(className))));
-			BootstrapClassLoader.CLASS_DATA.putAll(classData);
+			classData.keySet().forEach(className -> {
+				final byte[] transformed = TransformerRegistry.transform(className, classData.get(className));
+				if (transformed != null) {
+					Bootstrap.LOADER.defineClass(className, transformed);
+					classData.put(className, transformed);
+				}
+			});
 			Bootstrap.processClasses(classData);
 		} catch (final Exception e) {
 			Bootstrap.LOGGER.fatal("An error occurred while bootstrapping Shattered: {}", e.getMessage());

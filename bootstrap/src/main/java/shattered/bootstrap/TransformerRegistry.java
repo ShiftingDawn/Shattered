@@ -27,8 +27,7 @@ final class TransformerRegistry {
 	}
 
 	static byte[] transform(final String className, final byte[] data) {
-		boolean hasTransformed = false;
-		byte[] newData = data;
+		byte[] newData = null;
 		ClassReader currentReader = new ClassReader(data);
 		ClassNode currentNode = new ClassNode(Opcodes.ASM9);
 		currentReader.accept(currentNode, 0);
@@ -37,20 +36,19 @@ final class TransformerRegistry {
 				continue;
 			}
 			LOGGER.debug("Transforming class {} with transformer {}", className, transformer.getClass().getName());
-			final byte[] transformed = transformer.transform(newData);
+			final byte[] transformed = transformer.transform(newData != null ? newData : data);
 			if (transformed != null && transformed.length > 0) {
 				try {
 					currentReader = new ClassReader(transformed);
 					currentNode = new ClassNode(Opcodes.ASM9);
 					currentReader.accept(currentNode, 0);
 					newData = transformed;
-					hasTransformed = true;
 				} catch (final Exception e) {
 					LOGGER.atError().withThrowable(e).log("Could not apply transformer {} to class {}", transformer.getClass().getName(), className);
 				}
 			}
 		}
-		if (hasTransformed && TransformerRegistry.DUMP_CLASSES) {
+		if (newData != null && TransformerRegistry.DUMP_CLASSES) {
 			TransformerRegistry.dumpClass(className, newData);
 		}
 		return newData;
