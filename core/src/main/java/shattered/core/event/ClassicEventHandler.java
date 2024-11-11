@@ -119,12 +119,7 @@ final class ClassicEventHandler extends EventHandler {
 	private static class EventBusClassLoader extends ClassLoader {
 
 		public EventBusClassLoader() {
-			super(null);
-		}
-
-		@Override
-		protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-			return Class.forName(name, resolve, EventBusClassLoader.class.getClassLoader());
+			super(Thread.currentThread().getContextClassLoader());
 		}
 
 		@SneakyThrows
