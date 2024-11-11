@@ -11,6 +11,7 @@ import shattered.bridge.ShatteredEntryPoint;
 import shattered.core.event.EventBusImpl;
 import shattered.core.gfx.Display;
 import shattered.core.lib.ShutdownHookCaller;
+import shattered.core.resource.ResourceFinder;
 import shattered.lib.Internal;
 
 @ShatteredEntryPoint
@@ -23,6 +24,10 @@ public final class Shattered {
 	@Getter
 	private final Runtime runtime = new Runtime();
 	private final Set<ShutdownHookCaller> shutdownHooks = Collections.newSetFromMap(new WeakHashMap<>());
+	@Getter
+	private ResourceFinder assets;
+	@Getter
+	private ResourceFinder data;
 
 	private Shattered(final String[] args) {
 		Shattered.shattered = this;
@@ -35,7 +40,9 @@ public final class Shattered {
 
 	private void init() {
 		EventBusImpl.init();
+		this.assets = new ResourceFinder("assets");
 		Display.init();
+		this.data = new ResourceFinder("data");
 	}
 
 	private void start() {
