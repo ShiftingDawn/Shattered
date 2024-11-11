@@ -12,6 +12,7 @@ val joml = "1.10.7"
 val annotations = "26.0.1"
 val fastutil = "8.5.15"
 val gson = "2.11.0"
+val typetools = "0.6.3"
 
 dependencyResolutionManagement {
     versionCatalogs.create("core") {
@@ -27,6 +28,7 @@ dependencyResolutionManagement {
         library("gson", "com.google.code.gson", "gson").versionRef(version("gson", gson))
         library("lwjgl", "org.lwjgl", "lwjgl-bom").versionRef(version("lwjgl", lwjgl))
         library("joml", "org.joml", "joml").versionRef(version("joml", joml));
+        library("typetools", "net.jodah", "typetools").versionRef(version("typetools", typetools))
     }
 }
 
