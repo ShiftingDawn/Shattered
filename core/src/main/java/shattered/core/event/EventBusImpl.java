@@ -7,18 +7,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Consumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
+import net.jodah.typetools.TypeResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import shattered.bridge.RuntimeMetadata;
+import shattered.core.ExitShatteredException;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
 import shattered.lib.event.EventBus;
 import shattered.lib.event.EventBusSubscriber;
 import shattered.lib.event.Subscribe;
+import shattered.lib.event.SubscriberToken;
 import shattered.lib.util.FileHelper;
 import shattered.lib.util.Workspace;
 
@@ -29,7 +33,8 @@ public class EventBusImpl implements EventBus {
 	static final boolean DUMP_CLASSES = Boolean.getBoolean("shattered.eventbus.dumpclasses");
 	static final File DUMP_CLASSES_DIR = EventBusImpl.DUMP_CLASSES ? Workspace.makeDir("debug/eventbus/classdump").toFile() : null;
 	private final Object2ObjectMap<Object, List<EventHandler>> handlerMapping = new Object2ObjectArrayMap<>();
-	private final ObjectSortedSet<EventHandler> sortedHandlers = new ObjectRBTreeSet<>((o1, o2) -> o1.getPriority() == o2.getPriority() ? -1 : Integer.compare(o2.getPriority(), o1.getPriority()));
+	private final Set<EventHandler> sortedHandlers = new TreeSet<>((o1, o2) -> o1.getPriority() == o2.getPriority() ? -1 : Integer.compare(o2.getPriority(), o1.getPriority()));
+	private final Object2ObjectMap<Object, SubscriberToken> tokens = new Object2ObjectArrayMap<>();
 	private final String busName;
 
 	private EventBusImpl(final String busName) {
@@ -37,32 +42,51 @@ public class EventBusImpl implements EventBus {
 	}
 
 	@Override
-	public void register(final Object object) {
+	public SubscriberToken register(final Object object) {
 		Objects.requireNonNull(object);
 		if (this.handlerMapping.containsKey(object)) {
-			EventBusImpl.LOGGER.atError().withThrowable(new Exception())
-					.log("[{}]Cannot register event listeners for already registered class {}", this.busName, object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
-			return;
+			EventBusImpl.LOGGER.error("[{}]Cannot register event listeners for already registered class {}", this.busName, object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
+			throw new ExitShatteredException();
 		}
 		final Method[] methods = EventBusImpl.findListenerMethods(object);
-		final List<EventHandler> eventHandlers = new ArrayList<>();
+		final List<ClassicEventHandler> eventHandlers = new ArrayList<>();
 		for (final Method method : methods) {
-			eventHandlers.add(new EventHandler(method, object instanceof Class ? null : object));
+			eventHandlers.add(new ClassicEventHandler(method, object instanceof Class ? null : object));
 		}
 		this.handlerMapping.put(object, Collections.unmodifiableList(eventHandlers));
 		this.sortedHandlers.addAll(eventHandlers);
+		this.tokens.put(object, new SubscriberTokenImpl(object, obj -> {
+			final List<EventHandler> handlers = this.handlerMapping.get(obj);
+			if (handlers != null) {
+				handlers.forEach(h -> this.sortedHandlers.removeIf(h2 -> h2.id == h.id));
+			}
+			this.handlerMapping.remove(obj);
+			this.tokens.remove(obj);
+		}));
+		return this.tokens.get(object);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void unregister(final Object object) {
-		Objects.requireNonNull(object);
-		if (!this.handlerMapping.containsKey(object)) {
-			EventBusImpl.LOGGER.atError().withThrowable(new Exception())
-					.log("[{}]Cannot unregister event listeners for unregistered class {}", this.busName, object instanceof final Class<?> cls ? cls.getName() : object.getClass().getName());
-			return;
+	public <T extends Event> SubscriberToken register(final Consumer<T> consumer, final int priority) {
+		Objects.requireNonNull(consumer);
+		if (this.handlerMapping.containsKey(consumer)) {
+			EventBusImpl.LOGGER.error("[{}]Cannot register event listeners for already registered consumer {}", this.busName, consumer);
+			throw new ExitShatteredException();
 		}
-		this.sortedHandlers.removeAll(this.handlerMapping.get(object));
-		this.handlerMapping.remove(object);
+		final Class<T> eventType = (Class<T>) TypeResolver.resolveRawArgument(Consumer.class, consumer.getClass());
+		final ModernEventHandler handler = new ModernEventHandler(eventType, priority, (Consumer<Event>) consumer);
+		this.handlerMapping.put(consumer, List.of(handler));
+		this.sortedHandlers.add(handler);
+		this.tokens.put(consumer, new SubscriberTokenImpl(consumer, obj -> {
+			final List<EventHandler> handlers = this.handlerMapping.get(obj);
+			if (handlers != null) {
+				handlers.forEach(h -> this.sortedHandlers.removeIf(h2 -> h2.id == h.id));
+			}
+			this.handlerMapping.remove(obj);
+			this.tokens.remove(obj);
+		}));
+		return this.tokens.get(consumer);
 	}
 
 	@Override

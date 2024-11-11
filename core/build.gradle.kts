@@ -34,6 +34,7 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation(project.libs.joml)
+    implementation(project.libs.typetools)
 }
 
 java {

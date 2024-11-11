@@ -1,5 +1,6 @@
 package shattered.lib.event;
 
+import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import shattered.lib.Internal;
 
@@ -13,9 +14,13 @@ public interface EventBus {
 		return EventBus.create(null);
 	}
 
-	void register(Object object);
+	SubscriberToken register(Object object);
 
-	void unregister(Object object);
+	<T extends Event> SubscriberToken register(final Consumer<T> consumer, int priority);
+
+	default <T extends Event> SubscriberToken register(final Consumer<T> consumer) {
+		return this.register(consumer, 0);
+	}
 
 	void post(Event event);
 }
