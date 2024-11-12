@@ -1,4 +1,4 @@
-package shattered.core.lib;
+package shattered.core.meta;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import static shattered.core.Shattered.LOGGER;
+import static shattered.Shattered.LOGGER;
 
 final class ClassScanner {
 

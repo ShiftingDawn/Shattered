@@ -1,4 +1,4 @@
 @NotNullByDefault
-package shattered.core.resource;
+package shattered;
 
 import org.jetbrains.annotations.NotNullByDefault;

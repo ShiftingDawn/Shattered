@@ -1,4 +1,4 @@
 @NotNullByDefault
-package shattered.core.gfx;
+package shattered.core.meta;
 
 import org.jetbrains.annotations.NotNullByDefault;

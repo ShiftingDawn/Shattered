@@ -16,7 +16,7 @@ import net.jodah.typetools.TypeResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import shattered.core.ExitShatteredException;
-import shattered.core.lib.RuntimeMetadata;
+import shattered.core.meta.RuntimeMetadata;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
 import shattered.lib.event.EventBus;

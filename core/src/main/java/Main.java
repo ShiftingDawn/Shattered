@@ -3,8 +3,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
-import shattered.core.Shattered;
-import shattered.core.lib.RuntimeMetadata;
+import shattered.Shattered;
+import shattered.core.meta.RuntimeMetadata;
 
 public final class Main {
 

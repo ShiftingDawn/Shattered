@@ -1,4 +1,4 @@
-package shattered.core.lib;
+package shattered.core.meta;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
-import static shattered.core.Shattered.LOGGER;
+import static shattered.Shattered.LOGGER;
 
 public final class RuntimeMetadata {
 
