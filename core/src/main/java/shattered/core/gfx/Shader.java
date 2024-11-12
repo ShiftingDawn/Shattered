@@ -9,7 +9,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import shattered.core.ExitShatteredException;
 import shattered.core.Shattered;
-import shattered.core.lib.ShutdownHook;
 import shattered.lib.util.Utils;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
@@ -29,7 +28,6 @@ import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 import static shattered.core.Shattered.LOGGER;
 
-@ShutdownHook("destroy")
 public final class Shader {
 
 	private static final AtomicInteger ACTIVE = new AtomicInteger(-1);

@@ -1,24 +1,17 @@
 plugins {
-    java
+    application
     id("io.freefair.lombok") version "8.10.2"
     checkstyle
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    compileOnly(project(":bridge"))
-    implementation(project.core.asm)
-    implementation(project.core.asmTree)
-    implementation(project.core.asmUtil)
-    implementation(project.core.log4j)
-
     implementation(project(":lib"))
+    implementation(project.libs.asm)
+    implementation(project.libs.log4j)
     implementation(project.libs.annotations)
     implementation(project.libs.fastutil)
     implementation(project.libs.gson)
+    implementation(project.libs.typetools)
     implementation(platform(project.libs.lwjgl))
     implementation("org.lwjgl", "lwjgl")
     implementation("org.lwjgl", "lwjgl-assimp")
@@ -34,11 +27,20 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation(project.libs.joml)
-    implementation(project.libs.typetools)
 }
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+application {
+    mainClass = "Main"
+
+    applicationDefaultJvmArgs = listOf(
+        "-Dshattered.log.level=TRACE",
+        "-Dshattered.workspace.root=$rootDir/run",
+        "-Dshattered.eventbus.dumpclasses=true"
+    )
 }

@@ -1,20 +1,14 @@
 package shattered.core;
 
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.io.File;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import shattered.bridge.ShatteredEntryPoint;
 import shattered.core.event.EventBusImpl;
 import shattered.core.gfx.Display;
-import shattered.core.lib.ShutdownHookCaller;
 import shattered.core.resource.ResourceFinder;
 import shattered.lib.Internal;
 
-@ShatteredEntryPoint
 public final class Shattered {
 
 	public static final String NAME = "Shattered";
@@ -23,16 +17,15 @@ public final class Shattered {
 	private static Shattered shattered;
 	@Getter
 	private final Runtime runtime = new Runtime();
-	private final Set<ShutdownHookCaller> shutdownHooks = Collections.newSetFromMap(new WeakHashMap<>());
 	@Getter
 	private ResourceFinder assets;
 	@Getter
 	private ResourceFinder data;
 
-	private Shattered(final String[] args) {
+	private Shattered(final File rootDir, final String[] args) {
 		Shattered.shattered = this;
 		Internal.NAME = Shattered.NAME;
-		Internal.ROOT_PATH = Paths.get(args[0]).toAbsolutePath();
+		Internal.ROOT_PATH = rootDir.toPath().toAbsolutePath();
 		//TODO handle args
 		this.init();
 		this.start();
@@ -60,17 +53,15 @@ public final class Shattered {
 		}
 	}
 
-	public void addShutdownHook(final ShutdownHookCaller hook) {
-		this.shutdownHooks.add(hook);
-	}
-
-	public void removeShutdownHook(final ShutdownHookCaller hook) {
-		this.shutdownHooks.remove(hook);
-	}
-
 	public void stop() {
 		Shattered.LOGGER.warn("{} will now exit", Shattered.NAME);
-		this.shutdownHooks.forEach(ShutdownHookCaller::__executeShutdownHook);
 		this.runtime.stop();
+	}
+
+	public static void start(final File rootDir, final String[] args) {
+		if (Shattered.getShattered() != null) {
+			throw new IllegalStateException("The start-method can only be called once!");
+		}
+		new Shattered(rootDir, args);
 	}
 }

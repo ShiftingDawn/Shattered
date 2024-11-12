@@ -15,8 +15,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.jodah.typetools.TypeResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import shattered.bridge.RuntimeMetadata;
 import shattered.core.ExitShatteredException;
+import shattered.core.lib.RuntimeMetadata;
 import shattered.lib.Internal;
 import shattered.lib.event.Event;
 import shattered.lib.event.EventBus;
@@ -104,16 +104,11 @@ public class EventBusImpl implements EventBus {
 			EventBusImpl.DUMP_CLASSES_DIR.mkdirs();
 		}
 		Internal.EVENT_BUS_GENERATOR = EventBusImpl::getOrCreateBus;
-		final String[] classNamesToSubscribe = RuntimeMetadata.getAnnotatedClasses(EventBusSubscriber.class);
-		for (final String className : classNamesToSubscribe) {
-			try {
-				final Class<?> clazz = Class.forName(className);
-				final String busName = clazz.getDeclaredAnnotation(EventBusSubscriber.class).value();
-				EventBusImpl.getOrCreateBus(busName).register(clazz);
-				EventBusImpl.LOGGER.debug("Registered @{} annotated class {} in bus {}", EventBusSubscriber.class.getSimpleName(), className, busName);
-			} catch (final ClassNotFoundException e) {
-				EventBusImpl.LOGGER.atError().withThrowable(e).log("Could not register event listener class {}", className);
-			}
+		final Class<?>[] classNamesToSubscribe = RuntimeMetadata.getAnnotatedClasses(EventBusSubscriber.class);
+		for (final Class<?> clazz : classNamesToSubscribe) {
+			final String busName = clazz.getDeclaredAnnotation(EventBusSubscriber.class).value();
+			EventBusImpl.getOrCreateBus(busName).register(clazz);
+			EventBusImpl.LOGGER.debug("Registered @{} annotated class {} in bus {}", EventBusSubscriber.class.getSimpleName(), clazz.getName(), busName);
 		}
 	}
 
