@@ -12,6 +12,7 @@ import shattered.lib.Internal;
 import shattered.lib.gfx.BufferBuilder;
 import shattered.lib.gfx.Display;
 import shattered.lib.gfx.GeneralVertexFormats;
+import shattered.lib.gfx.ShaderProgram;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -22,16 +23,6 @@ import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glViewport;
-import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
-import static org.lwjgl.opengl.GL20.GL_VERTEX_SHADER;
-import static org.lwjgl.opengl.GL20.glAttachShader;
-import static org.lwjgl.opengl.GL20.glCompileShader;
-import static org.lwjgl.opengl.GL20.glCreateProgram;
-import static org.lwjgl.opengl.GL20.glCreateShader;
-import static org.lwjgl.opengl.GL20.glLinkProgram;
-import static org.lwjgl.opengl.GL20.glShaderSource;
-import static org.lwjgl.opengl.GL20.glUseProgram;
-import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
 
 public final class Shattered {
 
@@ -65,19 +56,8 @@ public final class Shattered {
 
 		glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
 
-		// Create a simple shader program
-		final int program = glCreateProgram();
-		final int vs = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vs, FileUtils.readFromClassPath("/root.vert"));
-		glCompileShader(vs);
-		glAttachShader(program, vs);
-		final int fs = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fs, FileUtils.readFromClassPath("/root.frag"));
-		glCompileShader(fs);
-		glAttachShader(program, fs);
-		glBindFragDataLocation(fs, 0, "outColor");
-		glLinkProgram(program);
-		glUseProgram(program);
+		final ShaderProgram shader = new ShaderProgram("/root.vert", "/root.frag", "outColor");
+		shader.bind();
 
 		while (!GLFW.glfwWindowShouldClose(Display.getWindow())) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

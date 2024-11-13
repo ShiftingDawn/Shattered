@@ -1,5 +1,3 @@
-#version 330 core
-
 in DATA {
     vec4 color;
 } data;
