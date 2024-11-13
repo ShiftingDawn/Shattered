@@ -2,8 +2,9 @@ package shattered.lib.gfx;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import shattered.FileUtils;
+import lombok.Getter;
 import shattered.core.ExitShatteredException;
+import shattered.lib.util.FileHelper;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
 import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
@@ -25,6 +26,7 @@ import static shattered.Shattered.LOGGER;
 public final class ShaderProgram {
 
 	private static final String VERSION = "330 core";
+	@Getter
 	private final int program;
 
 	public ShaderProgram(final String vertPath, final String fragPath, final String outputColorName) {
@@ -61,7 +63,7 @@ public final class ShaderProgram {
 
 	private static void compileShader(final int shaderId, final String path) {
 		try {
-			final String content = FileUtils.readFromClassPath(path);
+			final String content = FileHelper.readFromClassPath(path);
 			if (content == null) {
 				throw new FileNotFoundException("Could not load shader file: " + path);
 			}

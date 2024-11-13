@@ -5,6 +5,7 @@ import java.io.IOException;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import shattered.core.event.EventBusImpl;
@@ -12,7 +13,9 @@ import shattered.lib.Internal;
 import shattered.lib.gfx.BufferBuilder;
 import shattered.lib.gfx.Display;
 import shattered.lib.gfx.GeneralVertexFormats;
+import shattered.lib.gfx.MatrixUtils;
 import shattered.lib.gfx.ShaderProgram;
+import shattered.lib.gfx.ShaderProps;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -59,15 +62,18 @@ public final class Shattered {
 		final ShaderProgram shader = new ShaderProgram("/root.vert", "/root.frag", "outColor");
 		shader.bind();
 
+		glViewport(0, 0, Display.getWidth(), Display.getHeight());
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "projectionMatrix"), false, MatrixUtils.ortho());
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "modelViewMatrix"), false, new Matrix4f().identity());
+
 		while (!GLFW.glfwWindowShouldClose(Display.getWindow())) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			glViewport(0, 0, Display.getWidth(), Display.getHeight());
 			final BufferBuilder b = new BufferBuilder(GeneralVertexFormats.FORMAT_COLOR, 4, GL_TRIANGLE_FAN, () -> {
 			});
-			b.position(-0.5f, -0.5f).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(0.5f, -0.5f).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(0.5f, 0.5f).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(-0.5f, 0.5f).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(0, 0).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(100, 0).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(100, 100).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(0, 100).color(1f, 1f, 0f, 1f).endVertex();
 			b.draw();
 
 			glfwSwapBuffers(Display.getWindow());

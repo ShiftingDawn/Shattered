@@ -1,6 +1,9 @@
 package shattered.lib.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import org.jetbrains.annotations.Nullable;
 
 public final class FileHelper {
 
@@ -13,6 +16,16 @@ public final class FileHelper {
 			}
 			file.delete();
 		}
+	}
+
+	@Nullable
+	public static String readFromClassPath(final String path) throws IOException {
+		try (InputStream stream = FileHelper.class.getResourceAsStream(path)) {
+			if (stream != null) {
+				return new String(stream.readAllBytes());
+			}
+		}
+		return null;
 	}
 
 	private FileHelper() {
