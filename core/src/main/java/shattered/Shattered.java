@@ -84,10 +84,10 @@ public final class Shattered {
 			glViewport(0, 0, Display.getWidth(), Display.getHeight());
 			final BufferBuilder b = new BufferBuilder(GeneralVertexFormats.FORMAT_COLOR, 4, GL_TRIANGLE_FAN, () -> {
 			});
-			b.position(-0.5f, -0.5f).color(1f, 0f, 0f, 1f).endVertex();
-			b.position(0.5f, -0.5f).color(1f, 0f, 0f, 1f).endVertex();
-			b.position(0.5f, 0.5f).color(1f, 0f, 0f, 1f).endVertex();
-			b.position(-0.5f, 0.5f).color(1f, 0f, 0f, 1f).endVertex();
+			b.position(-0.5f, -0.5f).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(0.5f, -0.5f).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(0.5f, 0.5f).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(-0.5f, 0.5f).color(1f, 1f, 0f, 1f).endVertex();
 			b.draw();
 
 			glfwSwapBuffers(Display.getWindow());
