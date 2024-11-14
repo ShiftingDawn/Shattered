@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project.libs.annotations)
+    implementation(project.libs.gson)
     implementation(platform(project.libs.lwjgl))
     implementation("org.lwjgl", "lwjgl")
     implementation("org.lwjgl", "lwjgl-assimp")

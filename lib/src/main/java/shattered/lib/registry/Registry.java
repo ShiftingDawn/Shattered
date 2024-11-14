@@ -19,4 +19,6 @@ public interface Registry<T extends RegistryObject> extends Iterable<T> {
 
 	@UnknownNullability
 	Identifier getKey(T value);
+
+	String getRegistryName();
 }

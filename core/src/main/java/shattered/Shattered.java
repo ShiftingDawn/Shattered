@@ -9,6 +9,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import shattered.core.event.EventBusImpl;
+import shattered.core.registry.JsonRegistryLoader;
 import shattered.lib.Internal;
 import shattered.lib.gfx.BufferBuilder;
 import shattered.lib.gfx.Display;
@@ -54,6 +55,13 @@ public final class Shattered {
 	private void init() {
 		EventBusImpl.init();
 		Display.init();
+		JsonRegistryLoader.createRegistries();
+		try {
+			JsonRegistryLoader.loadRegistries(); //TODO async this
+		} catch (final IOException e) {
+			Shattered.LOGGER.fatal("Could not load registry data");
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void start() throws IOException {
@@ -66,7 +74,7 @@ public final class Shattered {
 		final ShaderProgram shader = new ShaderProgram("/assets/shattered/shader/root.vert", "/assets/shattered/shader/root.frag", "outColor");
 		shader.bind();
 
-		final Texture t1 = TextureLoader.loadTexture("/assets/shattered/textures/argon.png");
+		final Texture t1 = TextureLoader.loadTexture("/assets/shattered/texture/argon.png");
 
 		glViewport(0, 0, Display.getWidth(), Display.getHeight());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "projectionMatrix"), false, MatrixUtils.ortho());
