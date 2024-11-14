@@ -16,6 +16,7 @@ import shattered.lib.gfx.GeneralVertexFormats;
 import shattered.lib.gfx.MatrixUtils;
 import shattered.lib.gfx.ShaderProgram;
 import shattered.lib.gfx.ShaderProps;
+import shattered.lib.gfx.Texture;
 import shattered.lib.gfx.TextureLoader;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
@@ -65,7 +66,7 @@ public final class Shattered {
 		final ShaderProgram shader = new ShaderProgram("/root.vert", "/root.frag", "outColor");
 		shader.bind();
 
-		final TextureLoader t1 = new TextureLoader("/argon.png");
+		final Texture t1 = TextureLoader.loadTexture("/argon.png");
 
 		glViewport(0, 0, Display.getWidth(), Display.getHeight());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "projectionMatrix"), false, MatrixUtils.ortho());

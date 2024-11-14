@@ -1,13 +1,12 @@
 package shattered.lib.gfx;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import lombok.Getter;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import shattered.core.ResourceLoader;
+import shattered.lib.resource.InvalidTextureException;
+import shattered.lib.util.Utils;
 import static org.lwjgl.opengl.GL11.GL_REPEAT;
 import static org.lwjgl.opengl.GL11.GL_RGB;
 import static org.lwjgl.opengl.GL11.GL_RGBA;
@@ -28,63 +27,40 @@ import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
 public final class TextureLoader {
 
-	@Getter
-	private final int id;
+	public static Texture loadTexture(final String path) throws IOException {
+		return TextureLoader.makeTexture(ResourceLoader.getResourceAsBuffer(path));
+	}
 
-	public TextureLoader(final String path) throws IOException {
+	private static Texture makeTexture(final ByteBuffer imageBuffer) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			final IntBuffer w = stack.mallocInt(1);
 			final IntBuffer h = stack.mallocInt(1);
 			final IntBuffer c = stack.mallocInt(1);
-			
-			final ByteBuffer imageBuffer;
-			try (InputStream stream = ResourceLoader.getResourceAsStream(path)) {
-				final byte[] bytes = stream.readAllBytes();
-				imageBuffer = BufferUtils.createByteBuffer(bytes.length);
-				imageBuffer.put(bytes);
-			}
-			final ByteBuffer image = stbi_load_from_memory(imageBuffer.flip(), w, h, c, 0);
+
+			final ByteBuffer image = stbi_load_from_memory(imageBuffer, w, h, c, 0);
 			if (image == null) {
 				//TODO better exception
-				throw new IllegalStateException("Could not load image '%s', reason: %s".formatted(path, stbi_failure_reason()));
+				throw new InvalidTextureException("Could not load image: " + stbi_failure_reason());
 			}
 			final int width = w.get(0);
 			final int height = h.get(0);
-			final int channels = c.get(0);
+			final int glFormat = c.get(0) == 4 ? GL_RGBA : GL_RGB;
+			final int textureId = TextureLoader.generateAndConfigureGl();
 
-			this.id = glGenTextures();
-			glBindTexture(GL_TEXTURE_2D, this.id);
+			glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, image);
+			stbi_image_free(image);
+
+			return new Texture(textureId, width, height);
+		}
+	}
+
+	private static int generateAndConfigureGl() {
+		return Utils.make(glGenTextures(), id -> {
+			glBindTexture(GL_TEXTURE_2D, id);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-			final int format;
-			if (channels == 4) {
-				//				glEnable(GL_BLEND);
-				//				glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-				//				final int stride = width * 4;
-				//				for (int y = 0; y < height; y++) {
-				//					for (int x = 0; x < width; x++) {
-				//						final int i = y * stride + x * 4;
-				//
-				//						final float alpha = (image.get(i + 3) & 0xFF) / 255.0f;
-				//						image.put(i + 0, (byte) Math.round(((image.get(i + 0) & 0xFF) * alpha)));
-				//						image.put(i + 1, (byte) Math.round(((image.get(i + 1) & 0xFF) * alpha)));
-				//						image.put(i + 2, (byte) Math.round(((image.get(i + 2) & 0xFF) * alpha)));
-				//					}
-				//				}
-				format = GL_RGBA;
-			} else {
-				//				if ((width & 3) != 0) {
-				//					glPixelStorei(GL_UNPACK_ALIGNMENT, 2 - (width & 1));
-				//				}
-				format = GL_RGB;
-			}
-
-			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image);
-
-			stbi_image_free(image);
-		}
+		});
 	}
 }
