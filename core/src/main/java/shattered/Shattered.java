@@ -63,10 +63,10 @@ public final class Shattered {
 
 		glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
 
-		final ShaderProgram shader = new ShaderProgram("/root.vert", "/root.frag", "outColor");
+		final ShaderProgram shader = new ShaderProgram("/assets/shattered/shader/root.vert", "/assets/shattered/shader/root.frag", "outColor");
 		shader.bind();
 
-		final Texture t1 = TextureLoader.loadTexture("/argon.png");
+		final Texture t1 = TextureLoader.loadTexture("/assets/shattered/textures/argon.png");
 
 		glViewport(0, 0, Display.getWidth(), Display.getHeight());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "projectionMatrix"), false, MatrixUtils.ortho());
