@@ -16,13 +16,16 @@ import shattered.lib.gfx.GeneralVertexFormats;
 import shattered.lib.gfx.MatrixUtils;
 import shattered.lib.gfx.ShaderProgram;
 import shattered.lib.gfx.ShaderProps;
+import shattered.lib.gfx.TextureLoader;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_STENCIL_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
+import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glViewport;
@@ -62,18 +65,24 @@ public final class Shattered {
 		final ShaderProgram shader = new ShaderProgram("/root.vert", "/root.frag", "outColor");
 		shader.bind();
 
+		final TextureLoader t1 = new TextureLoader("/argon.png");
+
 		glViewport(0, 0, Display.getWidth(), Display.getHeight());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "projectionMatrix"), false, MatrixUtils.ortho());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, "modelViewMatrix"), false, new Matrix4f().identity());
 
+		glBindTexture(GL_TEXTURE_2D, t1.getId());
+
 		while (!GLFW.glfwWindowShouldClose(Display.getWindow())) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			final BufferBuilder b = new BufferBuilder(GeneralVertexFormats.FORMAT_COLOR, 4, GL_TRIANGLE_FAN, () -> {
+			final BufferBuilder b = new BufferBuilder(GeneralVertexFormats.FORMAT_TEXTURE, 4, GL_TRIANGLE_FAN, () -> {
+				ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, "enableTextures"), 1);
 			});
-			b.position(0, 0).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(100, 0).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(100, 100).color(1f, 1f, 0f, 1f).endVertex();
-			b.position(0, 100).color(1f, 1f, 0f, 1f).endVertex();
+			b.position(0, 0).color(1, 1, 1, 1).uv(0, 0).endVertex();
+			b.position(Display.getWidth(), 0).color(1, 1, 1, 1).uv(1, 0).endVertex();
+			b.position(Display.getWidth(), Display.getHeight()).color(1, 1, 1, 1).uv(1, 1).endVertex();
+			b.position(0, Display.getHeight()).color(1, 1, 1, 1).uv(0, 1).endVertex();
+
 			b.draw();
 
 			glfwSwapBuffers(Display.getWindow());

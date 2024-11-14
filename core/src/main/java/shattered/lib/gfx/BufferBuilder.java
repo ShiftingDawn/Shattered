@@ -65,18 +65,6 @@ public final class BufferBuilder {
 		return this;
 	}
 
-	public BufferBuilder uvStart(final float uStart, final float vStart) {
-		this.buffer.putFloat(uStart);
-		this.buffer.putFloat(vStart);
-		return this;
-	}
-
-	public BufferBuilder uvSize(final float uSize, final float vSize) {
-		this.buffer.putFloat(uSize);
-		this.buffer.putFloat(vSize);
-		return this;
-	}
-
 	public void endVertex() {
 		++this.vertices;
 		this.grow();
