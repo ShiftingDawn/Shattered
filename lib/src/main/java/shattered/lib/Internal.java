@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.function.Function;
 import org.jetbrains.annotations.ApiStatus;
 import shattered.lib.event.EventBus;
+import shattered.lib.gfx.Display;
 
 @ApiStatus.Internal
 public class Internal {
@@ -13,4 +14,6 @@ public class Internal {
 	public static Path ROOT_PATH;
 
 	public static Function<String, EventBus> EVENT_BUS_GENERATOR;
+
+	public static Display DISPLAY;
 }
