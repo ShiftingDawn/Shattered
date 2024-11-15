@@ -6,6 +6,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import shattered.lib.InputHandler;
 import shattered.lib.Internal;
 import static org.lwjgl.glfw.GLFW.GLFW_BLUE_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
@@ -49,6 +50,7 @@ public final class Window implements Display {
 
 	public void init() {
 		Internal.DISPLAY = this;
+		Internal.INPUT = InputHandler.INSTANCE;
 		glfwSetErrorCallback(GLFWErrorCallback.createPrint(System.err));
 		if (!glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
