@@ -6,6 +6,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryUtil;
+import shattered.lib.util.Color;
 
 public final class BufferBuilder {
 
@@ -56,6 +57,14 @@ public final class BufferBuilder {
 		this.buffer.putFloat(g);
 		this.buffer.putFloat(b);
 		this.buffer.putFloat(a);
+		return this;
+	}
+
+	public BufferBuilder color(final Color color) {
+		this.buffer.putFloat(color.r());
+		this.buffer.putFloat(color.g());
+		this.buffer.putFloat(color.b());
+		this.buffer.putFloat(color.a());
 		return this;
 	}
 

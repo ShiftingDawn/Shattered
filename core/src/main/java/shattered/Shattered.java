@@ -19,6 +19,7 @@ import shattered.lib.gfx.ShaderProgram;
 import shattered.lib.gfx.ShaderProps;
 import shattered.lib.gfx.Texture;
 import shattered.lib.gfx.TextureLoader;
+import shattered.lib.util.Color;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -87,10 +88,10 @@ public final class Shattered {
 			final BufferBuilder b = new BufferBuilder(GeneralVertexFormats.FORMAT_TEXTURE, 4, GL_TRIANGLE_FAN, () -> {
 				ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, "enableTextures"), 1);
 			});
-			b.position(0, 0).color(1, 1, 1, 1).uv(0, 0).endVertex();
-			b.position(Display.getWidth(), 0).color(1, 1, 1, 1).uv(1, 0).endVertex();
-			b.position(Display.getWidth(), Display.getHeight()).color(1, 1, 1, 1).uv(1, 1).endVertex();
-			b.position(0, Display.getHeight()).color(1, 1, 1, 1).uv(0, 1).endVertex();
+			b.position(0, 0).color(Color.RED).uv(0, 0).endVertex();
+			b.position(Display.getWidth(), 0).color(Color.GREEN).uv(1, 0).endVertex();
+			b.position(Display.getWidth(), Display.getHeight()).color(Color.BLUE).uv(1, 1).endVertex();
+			b.position(0, Display.getHeight()).color(Color.WHITE).uv(0, 1).endVertex();
 
 			b.draw();
 
