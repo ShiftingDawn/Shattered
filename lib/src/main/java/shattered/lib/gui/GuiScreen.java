@@ -31,30 +31,30 @@ public abstract class GuiScreen {
 	}
 
 	public final Rectangle getBounds() {
-		return this.bounds.toImmutable();
+		return this.calculatedPosition;
 	}
 
 	public final Point getPosition() {
-		return this.bounds.getPosition();
+		return this.getBounds().getPosition();
 	}
 
 	public final int getX() {
-		return this.bounds.getX();
+		return this.getBounds().getX();
 	}
 
 	public final int getY() {
-		return this.bounds.getX();
+		return this.getBounds().getX();
 	}
 
 	public final Dimension getSize() {
-		return this.bounds.getSize();
+		return this.getBounds().getSize();
 	}
 
 	public final int getWidth() {
-		return this.bounds.getX();
+		return this.getBounds().getX();
 	}
 
 	public final int getHeight() {
-		return this.bounds.getX();
+		return this.getBounds().getX();
 	}
 }

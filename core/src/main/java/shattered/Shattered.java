@@ -9,6 +9,7 @@ import shattered.core.event.EventBusImpl;
 import shattered.core.registry.JsonRegistryLoader;
 import shattered.lib.Internal;
 import shattered.lib.gfx.Window;
+import shattered.lib.gui.GuiManager;
 
 public final class Shattered {
 
@@ -17,15 +18,16 @@ public final class Shattered {
 	@Getter
 	private static Shattered shattered;
 	private final Runtime runtime = new Runtime();
-	//	@Getter
-	//	private final GuiManager guiManager;
+	@Getter
+	private RenderManager renderManager;
+	@Getter
+	private GuiManager guiManager;
 
 	private Shattered(final File rootDir, final String[] args) {
 		Shattered.shattered = this;
 		Internal.NAME = Shattered.NAME;
 		Internal.ROOT_PATH = rootDir.toPath().toAbsolutePath();
 		//TODO handle args
-		//		this.guiManager = new GuiManager();
 		this.init();
 		this.runtime.start();
 		Window.INSTANCE.destroy();
@@ -34,6 +36,8 @@ public final class Shattered {
 	private void init() {
 		EventBusImpl.init();
 		Window.INSTANCE.init();
+		this.renderManager = new RenderManager();
+		this.guiManager = new GuiManager();
 		JsonRegistryLoader.createRegistries();
 		try {
 			JsonRegistryLoader.loadRegistries(); //TODO async this
@@ -41,7 +45,6 @@ public final class Shattered {
 			Shattered.LOGGER.fatal("Could not load registry data");
 			throw new RuntimeException(e);
 		}
-		this.runtime.init();
 	}
 
 	public void stop() {
