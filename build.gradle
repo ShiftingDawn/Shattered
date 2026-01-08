@@ -4,11 +4,14 @@ plugins {
 	id "idea"
 }
 
+project.version = "0.1"
+
 repositories {
 	mavenCentral()
 }
 
 dependencies {
+	implementation libs.log4j
 	implementation libs.gson
 }
 
@@ -20,4 +23,18 @@ java {
 
 application {
 	mainClass = "Main"
+
+	applicationDefaultJvmArgs = [
+		"-Dshattered.workspace.root=$rootDir/run"
+	]
+}
+
+jar {
+	manifest {
+		attributes(
+			"Enable-Native-Access": "ALL-UNNAMED",
+			"Main-Class": "Main"
+		)
+	}
+	archiveBaseName = "shattered"
 }
