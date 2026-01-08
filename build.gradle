@@ -1,0 +1,23 @@
+plugins {
+	id "java"
+	id "application"
+	id "idea"
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation libs.gson
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+application {
+	mainClass = "Main"
+}

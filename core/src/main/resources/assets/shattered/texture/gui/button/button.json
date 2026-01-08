@@ -1,8 +1,0 @@
-{
-	"type": "bordered",
-	"variants": {
-		"": "shattered:gui/button/default",
-		"rollover": "shattered:gui/button/rollover",
-		"pressed": "shattered:gui/button/pressed"
-	}
-}
