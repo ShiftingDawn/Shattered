@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import dawn.asset.AssetResolver;
+import dawn.gfx.GlfwSetup;
+import dawn.gfx.Shader;
 import dawn.lib.ExitException;
 import dawn.lib.Workspace;
 import lombok.Getter;
@@ -18,12 +20,13 @@ public final class Dawn {
 	public static final Logger LOGGER = LogManager.getLogger(NAME);
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private static @Getter Dawn dawn;
-	public final Workspace workspace;
-	public final AssetResolver assets;
+	private final Runtime runtime = new Runtime();
+	private final @Getter Workspace workspace;
+	private final @Getter AssetResolver assets;
+	private @Getter RenderManager renderManager;
 
-	@SneakyThrows
 	private Dawn(File rootDir, String[] args) {
-		dawn = this;
+		Dawn.dawn = this;
 		//TODO handle args
 		try {
 			this.workspace = new Workspace(rootDir);
@@ -33,11 +36,23 @@ public final class Dawn {
 		}
 		this.assets = new AssetResolver(this.workspace);
 		init();
-		//TODO runtime start
-		//TODO destroy
+		runtime.start();
+		shutdown();
 	}
 
 	private void init() {
+		GlfwSetup.init();
+		this.renderManager = new RenderManager(this.assets);
+		runtime.init();
+	}
+
+	public void stop() {
+		LOGGER.info("Shutdown has been requested");
+		this.runtime.running.set(false);
+	}
+
+	private void shutdown() {
+		GlfwSetup.destroy();
 	}
 
 	public static void start(File rootDir, String[] args) {
@@ -46,5 +61,9 @@ public final class Dawn {
 			throw new IllegalStateException();
 		}
 		new Dawn(rootDir, args);
+	}
+
+	public static long clock() {
+		return System.nanoTime() / 1000_000;
 	}
 }

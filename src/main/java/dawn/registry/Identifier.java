@@ -9,8 +9,8 @@ public final class Identifier {
 
 	private static final String DOMAIN_SEPARATOR = ":";
 	private static final String VARIANT_SEPARATOR = "#";
-	private static final String DEFAULT_DOMAIN = Dawn.NAME_LOW;
-	private static final String DEFAULT_VARIANT = "default";
+	public static final String DEFAULT_DOMAIN = Dawn.NAME_LOW;
+	public static final String DEFAULT_VARIANT = "default";
 	private final @Getter String domain;
 	private final @Getter String path;
 	private final @Getter String variant;
@@ -21,6 +21,10 @@ public final class Identifier {
 		this.path = path;
 		this.variant = variant;
 		this.packed = domain + DOMAIN_SEPARATOR + path + VARIANT_SEPARATOR + variant;
+	}
+
+	public boolean isDefaultVariant() {
+		return DEFAULT_VARIANT.equals(this.variant);
 	}
 
 	@Override

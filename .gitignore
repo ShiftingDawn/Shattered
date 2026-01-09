@@ -2,6 +2,9 @@
 .gradle
 build
 
+### Java ###
+hs_err_*.log
+
 ### Intellij ###
 .idea/**/workspace.xml
 .idea/**/tasks.xml
