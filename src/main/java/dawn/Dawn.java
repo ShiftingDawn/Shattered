@@ -3,9 +3,11 @@ package dawn;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import dawn.asset.AssetResolver;
 import dawn.lib.ExitException;
 import dawn.lib.Workspace;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +19,9 @@ public final class Dawn {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private static @Getter Dawn dawn;
 	public final Workspace workspace;
+	public final AssetResolver assets;
 
+	@SneakyThrows
 	private Dawn(File rootDir, String[] args) {
 		dawn = this;
 		//TODO handle args
@@ -27,6 +31,7 @@ public final class Dawn {
 			LOGGER.error("Could not create workspace", e);
 			throw new ExitException();
 		}
+		this.assets = new AssetResolver(this.workspace);
 		init();
 		//TODO runtime start
 		//TODO destroy

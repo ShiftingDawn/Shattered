@@ -1,6 +1,5 @@
 import java.io.File;
 import java.util.Locale;
-import dawn.Dawn;
 import dawn.lib.ExitException;
 import org.apache.logging.log4j.LogManager;
 
@@ -9,7 +8,7 @@ private static final File ROOT_DIR = getRootDir();
 void main(String[] args) {
 	addFileAppender();
 	try {
-		Dawn.start(ROOT_DIR, args);
+		dawn.Dawn.start(ROOT_DIR, args);
 	} catch (ExitException ignored) {
 		System.exit(1);
 	}
@@ -18,15 +17,15 @@ void main(String[] args) {
 private static void addFileAppender() {
 	final File logsDir = new File(ROOT_DIR, "logs");
 	final String fullPath = new File(logsDir, "latest.log").getAbsolutePath();
-	System.setProperty("system.log.file", fullPath);
+	System.setProperty("dawn.log.file", fullPath);
 	final String cleanedPath = logsDir.getAbsolutePath() + File.separator + "%d{yyyy-MM-dd}-%i.log.gz";
-	System.setProperty("system.log.archive", cleanedPath);
+	System.setProperty("dawn.log.archive", cleanedPath);
 	final org.apache.logging.log4j.core.LoggerContext ctx = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
 	ctx.reconfigure();
 }
 
 private static File getRootDir() {
-	final String rootPathProperty = System.getProperty(Dawn.NAME_LOW + ".workspace.root");
+	final String rootPathProperty = System.getProperty("dawn.workspace.root");
 	if (rootPathProperty != null) {
 		final File result = new File(rootPathProperty);
 		if (!result.exists() && !result.mkdirs()) {
@@ -35,14 +34,14 @@ private static File getRootDir() {
 		return result;
 	}
 	final int os = getOperatingSystem();
-	File result = new File(System.getProperty("user.home"), ".local/share/" + Dawn.NAME_LOW);
+	File result = new File(System.getProperty("user.home"), ".local/share/ShiftingDawn");
 	if (os == 1) {
 		final String appdata = System.getenv("APPDATA");
 		if (appdata != null) {
-			result = new File(appdata, Dawn.NAME_LOW);
+			result = new File(appdata, "ShiftingDawn");
 		}
 	} else if (os == 2) {
-		result = new File(System.getProperty("user.home"), "Library/Application Support/" + Dawn.NAME);
+		result = new File(System.getProperty("user.home"), "Library/Application Support/ShiftingDawn");
 	}
 	if (!result.exists() && !result.mkdirs()) {
 		throw new IllegalArgumentException("Cannot make workspace: " + result.getAbsolutePath());

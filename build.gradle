@@ -9,7 +9,6 @@ dependencies {
 	implementation libs.log4j
 	implementation libs.jspecify
 	implementation libs.fastutil
-	implementation libs.asm
 	implementation libs.gson
 }
 
@@ -21,7 +20,7 @@ application {
 	mainClass = "Main"
 
 	applicationDefaultJvmArgs = [
-		"-Dshattered.workspace.root=$rootDir/run"
+		"-Ddawn.workspace.root=$rootDir/run"
 	]
 }
 
@@ -32,7 +31,7 @@ jar {
 			"Main-Class": "Main"
 		)
 	}
-	archiveBaseName = "shattered"
+	archiveBaseName = "dawn"
 }
 
 java {
