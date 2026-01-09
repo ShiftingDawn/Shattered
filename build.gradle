@@ -2,23 +2,19 @@ plugins {
 	id "java"
 	id "application"
 	id "idea"
-}
-
-project.version = "0.1"
-
-repositories {
-	mavenCentral()
+	id("io.freefair.lombok") version "9.1.0"
 }
 
 dependencies {
 	implementation libs.log4j
+	implementation libs.jspecify
+	implementation libs.fastutil
+	implementation libs.asm
 	implementation libs.gson
 }
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+repositories {
+	mavenCentral()
 }
 
 application {
@@ -37,4 +33,21 @@ jar {
 		)
 	}
 	archiveBaseName = "shattered"
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+idea {
+	module {
+		downloadJavadoc = true;
+		downloadSources = true;
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.setIncremental(true)
 }

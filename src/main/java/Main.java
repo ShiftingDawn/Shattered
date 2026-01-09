@@ -1,14 +1,18 @@
 import java.io.File;
 import java.util.Locale;
+import dawn.Dawn;
+import dawn.lib.ExitException;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 private static final File ROOT_DIR = getRootDir();
-private static final Logger LOGGER = LogManager.getLogger(C.NAME);
 
-void main() {
+void main(String[] args) {
 	addFileAppender();
-	LOGGER.info("Booting...");
+	try {
+		Dawn.start(ROOT_DIR, args);
+	} catch (ExitException ignored) {
+		System.exit(1);
+	}
 }
 
 private static void addFileAppender() {
@@ -22,7 +26,7 @@ private static void addFileAppender() {
 }
 
 private static File getRootDir() {
-	final String rootPathProperty = System.getProperty(C.NAME_LOW + ".workspace.root");
+	final String rootPathProperty = System.getProperty(Dawn.NAME_LOW + ".workspace.root");
 	if (rootPathProperty != null) {
 		final File result = new File(rootPathProperty);
 		if (!result.exists() && !result.mkdirs()) {
@@ -31,14 +35,14 @@ private static File getRootDir() {
 		return result;
 	}
 	final int os = getOperatingSystem();
-	File result = new File(System.getProperty("user.home"), ".local/share/" + C.NAME_LOW);
+	File result = new File(System.getProperty("user.home"), ".local/share/" + Dawn.NAME_LOW);
 	if (os == 1) {
 		final String appdata = System.getenv("APPDATA");
 		if (appdata != null) {
-			result = new File(appdata, C.NAME);
+			result = new File(appdata, Dawn.NAME_LOW);
 		}
 	} else if (os == 2) {
-		result = new File(System.getProperty("user.home"), "Library/Application Support/" + C.NAME);
+		result = new File(System.getProperty("user.home"), "Library/Application Support/" + Dawn.NAME);
 	}
 	if (!result.exists() && !result.mkdirs()) {
 		throw new IllegalArgumentException("Cannot make workspace: " + result.getAbsolutePath());
