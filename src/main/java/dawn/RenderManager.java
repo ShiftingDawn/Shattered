@@ -1,7 +1,9 @@
 package dawn;
 
 import dawn.asset.AssetResolver;
+import dawn.event.EventBus;
 import dawn.gfx.Display;
+import dawn.gfx.DisplayResizedEvent;
 import dawn.gfx.MatrixUtils;
 import dawn.gfx.Shader;
 import dawn.gfx.ShaderProps;
@@ -15,6 +17,7 @@ public final class RenderManager {
 		Display.activate();
 		this.shader = new Shader(assets, "root", "outColor");
 		this.shader.bind();
+		EventBus.register(DisplayResizedEvent.class, _ -> this.resetShader());
 		resetShader();
 	}
 
