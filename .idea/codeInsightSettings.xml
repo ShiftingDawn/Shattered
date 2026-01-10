@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+    <component name="JavaProjectCodeInsightSettings">
+        <excluded-names>
+            <name>org.jetbrains.annotations.NotNull</name>
+            <name>org.jetbrains.annotations.NotNullByDefault</name>
+            <name>org.jetbrains.annotations.Nullable</name>
+            <name>org.jetbrains.annotations.UnknownNullability</name>
+        </excluded-names>
+    </component>
+</project>

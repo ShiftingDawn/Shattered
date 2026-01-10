@@ -5,11 +5,10 @@ import java.io.IOException;
 import java.util.Locale;
 import dawn.asset.AssetResolver;
 import dawn.gfx.GlfwSetup;
-import dawn.gfx.Shader;
 import dawn.lib.ExitException;
 import dawn.lib.Workspace;
+import dawn.registry.RegistrySetup;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,15 +34,16 @@ public final class Dawn {
 			throw new ExitException();
 		}
 		this.assets = new AssetResolver(this.workspace);
-		init();
-		runtime.start();
-		shutdown();
+		this.init();
+		this.runtime.start();
+		this.shutdown();
 	}
 
 	private void init() {
 		GlfwSetup.init();
 		this.renderManager = new RenderManager(this.assets);
-		runtime.init();
+		RegistrySetup.load(this.assets);
+		this.runtime.init();
 	}
 
 	public void stop() {
@@ -57,7 +57,7 @@ public final class Dawn {
 
 	public static void start(File rootDir, String[] args) {
 		//noinspection ConstantValue
-		if (getDawn() != null) {
+		if (Dawn.getDawn() != null) {
 			throw new IllegalStateException();
 		}
 		new Dawn(rootDir, args);

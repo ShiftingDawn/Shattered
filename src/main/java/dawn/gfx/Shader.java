@@ -29,14 +29,14 @@ public final class Shader {
 
 	private final @Getter int program;
 
-	public Shader(AssetResolver assets, String path, String outputColorName) {
+	public Shader(final AssetResolver assets, final String path, final String outputColorName) {
 		//Generate shaders and program
 		final int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		final int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		this.program = glCreateProgram();
 		//Load and compile shaders
-		compileShader(vertexShader, assets, assets.getPath(Identifier.of(path + ".vert")));
-		compileShader(fragmentShader, assets, assets.getPath(Identifier.of(path + ".frag")));
+		Shader.compileShader(vertexShader, assets, assets.makePath(Identifier.of(path), null, "vert"));
+		Shader.compileShader(fragmentShader, assets, assets.makePath(Identifier.of(path), null, "frag"));
 		//Configure shaders and program
 		glAttachShader(this.program, fragmentShader);
 		glAttachShader(this.program, vertexShader);
@@ -63,21 +63,21 @@ public final class Shader {
 		glDeleteProgram(this.program);
 	}
 
-	private static void compileShader(int shader, AssetResolver assets, String shaderPath) {
+	private static void compileShader(final int shader, final AssetResolver assets, final String shaderPath) {
 		try {
-			InputStream stream = assets.findResourceStream(shaderPath);
+			final InputStream stream = assets.getStream(shaderPath);
 			if (stream == null) {
 				GlfwSetup.LOGGER.fatal("Could not load shader file: {}", shaderPath);
 				throw new FileNotFoundException();
 			}
-			String shaderSource = new String(stream.readAllBytes());
+			final String shaderSource = new String(stream.readAllBytes());
 			stream.close();
 			glShaderSource(shader, shaderSource);
 			glCompileShader(shader);
 			if (glGetShaderi(shader, GL_COMPILE_STATUS) != GL_TRUE) {
 				throw new IOException();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			GlfwSetup.LOGGER.fatal("Could not compile shader: {}", shaderPath);
 			throw new ExitException();
 		}

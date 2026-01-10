@@ -10,7 +10,8 @@ project.ext.lwjglNatives = "natives-linux"
 
 dependencies {
 	implementation libs.log4j
-	implementation libs.jspecify
+	compileOnly libs.jspecify
+	compileOnly libs.annotations
 	implementation libs.fastutil
 	implementation libs.gson
 	implementation libs.joml

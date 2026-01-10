@@ -1,4 +1,4 @@
-package dawn.lib;
+package dawn.registry;
 
 public final class MalformedIdentifierException extends RuntimeException {
 
