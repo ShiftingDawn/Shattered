@@ -30,7 +30,7 @@ dependencies {
 
 repositories {
 	mavenCentral()
-	maven { url "https://central.sonatype.com/repository/maven-snapshots" }
+	maven { url = "https://central.sonatype.com/repository/maven-snapshots" }
 }
 
 application {
@@ -38,9 +38,7 @@ application {
 
 	applicationDefaultJvmArgs = [
 		"--enable-native-access=ALL-UNNAMED",
-		"-Ddawn.workspace.root=$rootDir/run",
-		"-Dorg.lwjgl.util.Debug=true",
-		"-Dorg.lwjgl.util.DebugLoader=true"
+		"-Ddawn.workspace.root=$rootDir/run"
 	]
 }
 

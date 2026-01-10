@@ -32,6 +32,7 @@ import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwInitHint;
 import static org.lwjgl.glfw.GLFW.glfwPlatformSupported;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
@@ -73,7 +74,9 @@ public final class GlfwSetup {
 			LOGGER.fatal("Could not create window");
 			throw new ExitException();
 		}
+
 		Callbacks.init(window);
+
 		glfwShowWindow(window);
 		final IntBuffer framebufferSize = BufferUtils.createIntBuffer(2);
 		nglfwGetFramebufferSize(window, memAddress(framebufferSize), memAddress(framebufferSize) + 4);

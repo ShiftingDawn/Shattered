@@ -20,7 +20,7 @@ public final class Display {
 	private static @Getter int height = DEFAULT_HEIGHT;
 
 	public static void activate() {
-		glfwMakeContextCurrent(getWindow());
+		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 		GL.createCapabilities();
 	}
