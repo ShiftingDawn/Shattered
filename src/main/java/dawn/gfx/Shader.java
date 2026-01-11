@@ -3,7 +3,7 @@ package dawn.gfx;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import dawn.asset.AssetResolver;
+import dawn.asset.ResourceResolver;
 import dawn.lib.ExitException;
 import dawn.registry.Identifier;
 import lombok.Getter;
@@ -29,14 +29,14 @@ public final class Shader {
 
 	private final @Getter int program;
 
-	public Shader(final AssetResolver assets, final String path, final String outputColorName) {
+	public Shader(final ResourceResolver resources, final String path, final String outputColorName) {
 		//Generate shaders and program
 		final int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		final int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		this.program = glCreateProgram();
 		//Load and compile shaders
-		Shader.compileShader(vertexShader, assets, assets.makePath(Identifier.of(path), null, "vert"));
-		Shader.compileShader(fragmentShader, assets, assets.makePath(Identifier.of(path), null, "frag"));
+		Shader.compileShader(vertexShader, resources, resources.makePath(Identifier.of(path), null, "vert"));
+		Shader.compileShader(fragmentShader, resources, resources.makePath(Identifier.of(path), null, "frag"));
 		//Configure shaders and program
 		glAttachShader(this.program, fragmentShader);
 		glAttachShader(this.program, vertexShader);
@@ -63,9 +63,9 @@ public final class Shader {
 		glDeleteProgram(this.program);
 	}
 
-	private static void compileShader(final int shader, final AssetResolver assets, final String shaderPath) {
+	private static void compileShader(final int shader, final ResourceResolver resources, final String shaderPath) {
 		try {
-			final InputStream stream = assets.getStream(shaderPath);
+			final InputStream stream = resources.getStream(shaderPath);
 			if (stream == null) {
 				GlfwSetup.LOGGER.fatal("Could not load shader file: {}", shaderPath);
 				throw new FileNotFoundException();

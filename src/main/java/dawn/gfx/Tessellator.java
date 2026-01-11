@@ -1,25 +1,32 @@
 package dawn.gfx;
 
 import java.util.function.Consumer;
+import dawn.asset.TextureManager;
 import dawn.lib.Color;
 import dawn.lib.math.Dimension;
 import dawn.lib.math.Point;
 import dawn.lib.math.Rectangle;
+import dawn.registry.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN;
+import static org.lwjgl.opengl.GL11.GL_TRUE;
+import static org.lwjgl.opengl.GL11.glBindTexture;
 
 public final class Tessellator {
 
 	private final Matrix4fStack matrixStack = new Matrix4fStack(6);
 	private final Rectangle bounds = Rectangle.createMutable(0, 0, 0, 0);
 	private final Shader shader;
+	private final TextureManager textures;
 	private boolean drawing = false;
 
-	public Tessellator(final Shader shader) {
+	public Tessellator(final Shader shader, final TextureManager textures) {
 		this.shader = shader;
+		this.textures = textures;
 	}
 
 	private void testDrawing() {
@@ -107,6 +114,21 @@ public final class Tessellator {
 		builder.position(this.bounds.getX(), this.bounds.getMaxY()).color(color).endVertex();
 		builder.position(this.bounds.getMaxX(), this.bounds.getMaxY()).color(color).endVertex();
 		builder.position(this.bounds.getMaxX(), this.bounds.getY()).color(color).endVertex();
+		builder.draw();
+		return this;
+	}
+
+	public Tessellator draw(final Identifier texture, final Color tint) {
+		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, 4, GL_TRIANGLE_FAN, () -> {
+			this.shader.bind();
+			glBindTexture(GL_TEXTURE_2D, this.textures.getTextureId(texture));
+			ShaderProps.setUniform1(ShaderProps.getNamedLocation(this.shader, "enableTextures"), GL_TRUE);
+			ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, "globalTransformMatrix"), false, this.matrixStack);
+		});
+		builder.position(this.bounds.getX(), this.bounds.getY()).color(tint).uv(0, 0).endVertex();
+		builder.position(this.bounds.getX(), this.bounds.getMaxY()).color(tint).uv(0, 1).endVertex();
+		builder.position(this.bounds.getMaxX(), this.bounds.getMaxY()).color(tint).uv(1, 1).endVertex();
+		builder.position(this.bounds.getMaxX(), this.bounds.getY()).color(tint).uv(1, 0).endVertex();
 		builder.draw();
 		return this;
 	}

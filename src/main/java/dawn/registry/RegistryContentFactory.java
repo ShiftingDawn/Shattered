@@ -1,8 +1,9 @@
 package dawn.registry;
 
-import dawn.asset.AssetResolver;
+import dawn.asset.ResourceResolver;
+import org.apache.logging.log4j.Logger;
 
 public interface RegistryContentFactory<T extends RegistryObject> {
 
-	void make(AssetResolver assets, Registry<T> registry, Identifier registryKey);
+	void make(Logger logger, ResourceResolver assets, Registry<T> registry, Identifier registryKey);
 }

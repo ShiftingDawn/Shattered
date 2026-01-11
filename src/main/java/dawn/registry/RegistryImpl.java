@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import dawn.asset.AssetResolver;
+import dawn.asset.ResourceResolver;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 @RequiredArgsConstructor
@@ -23,8 +24,8 @@ final class RegistryImpl<T extends RegistryObject> implements Registry<T> {
 	@Getter
 	private final RegistryContentFactory<T> contentFactory;
 
-	public void loadContent(AssetResolver assets, final List<Identifier> items) {
-		items.forEach(item -> this.contentFactory.make(assets, this, item));
+	public void loadContent(final Logger logger, final ResourceResolver assets, final List<Identifier> items) {
+		items.forEach(item -> this.contentFactory.make(logger, assets, this, item));
 	}
 
 	@Override

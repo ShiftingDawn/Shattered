@@ -8,20 +8,20 @@ import java.util.Optional;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
-import dawn.asset.AssetResolver;
+import dawn.asset.ResourceResolver;
 import dawn.asset.TextureAsset;
 import dawn.asset.TextureType;
 import dawn.lib.Util;
 import dawn.lib.json.GsonHelper;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
-import static dawn.asset.AssetResolver.LOGGER;
 
 final class TextureRegistryContentFactory implements RegistryContentFactory<TextureAsset> {
 
 	@Override
-	public void make(final AssetResolver assets, final Registry<TextureAsset> registry, final Identifier registryKey) {
-		LOGGER.debug("Loading texture definition {}", registry);
-		final JsonTextureData textureData = Optional.ofNullable(TextureRegistryContentFactory.loadJsonData(assets, registryKey)).orElseGet(JsonTextureData.Default::new);
+	public void make(final Logger logger, final ResourceResolver assets, final Registry<TextureAsset> registry, final Identifier registryKey) {
+		logger.debug("Loading texture definition {}", registryKey);
+		final JsonTextureData textureData = Optional.ofNullable(TextureRegistryContentFactory.loadJsonData(logger, assets, registryKey)).orElseGet(JsonTextureData.Default::new);
 		final TextureAsset texture = switch (textureData.textureType) {
 			case DEFAULT -> TextureRegistryContentFactory.makeDefault(registryKey, (JsonTextureData.Default) textureData);
 			case STITCHED -> TextureRegistryContentFactory.makeStitched(registryKey, (JsonTextureData.Stitched) textureData);
@@ -53,22 +53,22 @@ final class TextureRegistryContentFactory implements RegistryContentFactory<Text
 		return new TextureAsset.Animation(registryKey, data.fps, data.frameMapping);
 	}
 
-	public static @Nullable JsonTextureData loadJsonData(final AssetResolver assets, final Identifier resource) {
+	public static @Nullable JsonTextureData loadJsonData(final Logger logger, final ResourceResolver assets, final Identifier resource) {
 		final String path = assets.makePath(resource, "texture", "json");
 		try {
 			return TextureRegistryContentFactory.loadJsonDataInternal(assets, path);
 		} catch (final FileNotFoundException ignored) {
-			LOGGER.debug("Could not find metadata for texture \"{}\", assuming defaults. Expected path: {}", resource, path);
+			logger.debug("Could not find metadata for texture \"{}\", assuming defaults. Expected path: {}", resource, path);
 			return null;
 		} catch (final IOException | JsonIOException | JsonSyntaxException e) {
-			LOGGER.error("Could not read texture metadata for texture \"{}\"", resource);
-			LOGGER.error(e);
-			LOGGER.error("\tIgnoring the metadata and loading as a default texture");
+			logger.error("Could not read texture metadata for texture \"{}\"", resource);
+			logger.error(e);
+			logger.error("\tIgnoring the metadata and loading as a default texture");
 			return null;
 		}
 	}
 
-	private static @Nullable JsonTextureData loadJsonDataInternal(final AssetResolver assets, final String path) throws IOException, JsonIOException, JsonSyntaxException {
+	private static @Nullable JsonTextureData loadJsonDataInternal(final ResourceResolver assets, final String path) throws IOException, JsonIOException, JsonSyntaxException {
 		try (InputStream stream = assets.getStream(path)) {
 			if (stream == null) {
 				throw new FileNotFoundException();

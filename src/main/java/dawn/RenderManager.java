@@ -1,6 +1,7 @@
 package dawn;
 
-import dawn.asset.AssetResolver;
+import dawn.asset.AssetManager;
+import dawn.asset.ResourceResolver;
 import dawn.event.EventBus;
 import dawn.gfx.Display;
 import dawn.gfx.DisplayResizedEvent;
@@ -8,6 +9,7 @@ import dawn.gfx.MatrixUtils;
 import dawn.gfx.Shader;
 import dawn.gfx.ShaderProps;
 import dawn.gfx.Tessellator;
+import dawn.init.Textures;
 import dawn.lib.Color;
 import lombok.Getter;
 import static org.lwjgl.opengl.GL11.glViewport;
@@ -17,18 +19,18 @@ public final class RenderManager {
 	private final Shader shader;
 	private final @Getter Tessellator tessellator;
 
-	RenderManager(AssetResolver assets) {
+	RenderManager(final ResourceResolver resources, final AssetManager assets) {
 		Display.activate();
-		this.shader = new Shader(assets, "root", "outColor");
+		this.shader = new Shader(resources, "root", "outColor");
 		this.shader.bind();
-		this.tessellator = new Tessellator(this.shader);
+		this.tessellator = new Tessellator(this.shader, assets.getTextures());
 		EventBus.register(DisplayResizedEvent.class, _ -> this.resetShader());
 		this.resetShader();
 	}
 
 	void render() {
 		//TODO render gui
-		tessellator.start().set(0, 0, Display.getWidth(), Display.getHeight() / 2).draw(Color.MAGENTA).end();
+		this.tessellator.start().set(0, 0, Display.getWidth(), Display.getHeight() / 2).draw(Textures.ARGON, Color.YELLOW).end();
 	}
 
 	private void resetShader() {
