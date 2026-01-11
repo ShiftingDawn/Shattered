@@ -89,22 +89,22 @@ public final class TextureManager {
 	}
 
 	private void unloadTexture(final TextureAsset texture) {
-		final int textureId = this.getTextureId(texture);
-		if (textureId > 0) {
-			TextureManager.LOGGER.debug("\tUnloading texture {} ({})", texture.getRegistryKey(), textureId);
-			glDeleteTextures(textureId);
+		final Texture tex = this.mapping.get(texture.getRegistryKey());
+		if (tex != null) {
+			TextureManager.LOGGER.debug("\tUnloading texture {} ({})", texture.getRegistryKey(), tex.id());
+			glDeleteTextures(tex.id());
 			this.mapping.remove(texture.getRegistryKey());
 			TextureManager.LOGGER.debug("\t\tDone");
 		}
 	}
 
-	public int getTextureId(final Identifier texture) {
-		final Texture tex = this.mapping.get(texture);
-		return tex == null ? -1 : tex.id();
+	public Texture getTexture(final Identifier texture) {
+		//TODO missing texture
+		return this.mapping.get(texture);
 	}
 
-	public int getTextureId(final TextureAsset texture) {
-		return this.getTextureId(texture.getRegistryKey());
+	public Texture getTexture(final TextureAsset texture) {
+		return this.getTexture(texture.getRegistryKey());
 	}
 
 	private int makeTextureId() {

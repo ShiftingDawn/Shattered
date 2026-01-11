@@ -2,7 +2,6 @@ package dawn.lib.math;
 
 import java.util.Objects;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Point {
@@ -18,7 +17,6 @@ public final class Point {
 		this.y = y;
 	}
 
-	@NotNull
 	public Point setX(final double x) {
 		if (!this.mutable) {
 			return new Point(x, this.y, false);
@@ -27,7 +25,6 @@ public final class Point {
 		return this;
 	}
 
-	@NotNull
 	public Point setY(final double y) {
 		if (!this.mutable) {
 			return new Point(this.x, y, false);
@@ -36,17 +33,14 @@ public final class Point {
 		return this;
 	}
 
-	@NotNull
 	public Point moveX(final double amount) {
 		return this.setX(this.x + amount);
 	}
 
-	@NotNull
 	public Point moveY(final double amount) {
 		return this.setY(this.y + amount);
 	}
 
-	@NotNull
 	public Point move(final double amountX, final double amountY) {
 		if (!this.mutable) {
 			return new Point(this.x + amountX, this.y + amountY, false);
@@ -56,18 +50,15 @@ public final class Point {
 		return this;
 	}
 
-	@NotNull
-	public Point move(@NotNull final Dimension amount) {
+	public Point move(final Dimension amount) {
 		return this.move(amount.getWidth(), amount.getHeight());
 	}
 
-	@NotNull
-	public Point add(@NotNull final Point point) {
+	public Point add(final Point point) {
 		return this.move(point.getX(), point.getY());
 	}
 
-	@NotNull
-	public Point subtract(@NotNull final Point point) {
+	public Point subtract(final Point point) {
 		return this.move(-point.getX(), -point.getY());
 	}
 
@@ -87,17 +78,14 @@ public final class Point {
 		return this.y;
 	}
 
-	@NotNull
 	public Point toMutable() {
 		return this.mutable ? this : new Point(this.x, this.y, true);
 	}
 
-	@NotNull
 	public Point toImmutable() {
 		return this.mutable ? new Point(this.x, this.y, false) : this;
 	}
 
-	@NotNull
 	public Point copy() {
 		return new Point(this.x, this.y, this.mutable);
 	}
@@ -123,22 +111,18 @@ public final class Point {
 		return "Point[X=" + this.x + ",Y=" + this.y + ']';
 	}
 
-	@NotNull
 	public static Point create(final int x, final int y) {
 		return new Point(x, y, false);
 	}
 
-	@NotNull
 	public static Point create(final double x, final double y) {
 		return new Point(x, y, false);
 	}
 
-	@NotNull
 	public static Point createMutable(final int x, final int y) {
 		return new Point(x, y, true);
 	}
 
-	@NotNull
 	public static Point createMutable(final double x, final double y) {
 		return new Point(x, y, true);
 	}

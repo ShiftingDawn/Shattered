@@ -2,7 +2,6 @@ package dawn.lib.math;
 
 import java.util.Objects;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 
 public final class Rectangle {
 
@@ -18,7 +17,6 @@ public final class Rectangle {
 		this.size = Dimension.createMutable(width, height);
 	}
 
-	@NotNull
 	public Rectangle setX(final double x) {
 		if (!this.mutable) {
 			return new Rectangle(x, this.getDoubleY(), this.getDoubleWidth(), this.getDoubleHeight(), false);
@@ -27,7 +25,6 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
 	public Rectangle setY(final double y) {
 		if (!this.mutable) {
 			return new Rectangle(this.getDoubleX(), y, this.getDoubleWidth(), this.getDoubleHeight(), false);
@@ -36,7 +33,6 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
 	public Rectangle setPosition(final double x, final double y) {
 		if (!this.mutable) {
 			return new Rectangle(x, y, this.getDoubleWidth(), this.getDoubleHeight(), false);
@@ -46,12 +42,10 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
-	public Rectangle setPosition(@NotNull final Point position) {
+	public Rectangle setPosition(final Point position) {
 		return this.setPosition(position.getDoubleX(), position.getDoubleY());
 	}
 
-	@NotNull
 	public Rectangle setWidth(final double width) {
 		if (!this.mutable) {
 			return new Rectangle(this.getDoubleX(), this.getDoubleY(), width, this.getDoubleHeight(), false);
@@ -60,7 +54,6 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
 	public Rectangle setHeight(final double height) {
 		if (!this.mutable) {
 			return new Rectangle(this.getDoubleX(), this.getDoubleY(), this.getDoubleWidth(), height, false);
@@ -69,7 +62,6 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
 	public Rectangle setSize(final double width, final double height) {
 		if (!this.mutable) {
 			return new Rectangle(this.getDoubleX(), this.getDoubleY(), width, height, false);
@@ -79,63 +71,51 @@ public final class Rectangle {
 		return this;
 	}
 
-	@NotNull
-	public Rectangle setSize(@NotNull final Dimension size) {
+	public Rectangle setSize(final Dimension size) {
 		return this.setSize(size.getDoubleWidth(), size.getDoubleHeight());
 	}
 
-	@NotNull
 	public Rectangle moveX(final double amount) {
 		return this.setX(this.getDoubleX() + amount);
 	}
 
-	@NotNull
 	public Rectangle moveY(final double amount) {
 		return this.setY(this.getDoubleY() + amount);
 	}
 
-	@NotNull
 	public Rectangle move(final double amountX, final double amountY) {
 		return this.setPosition(this.getDoubleX() + amountX, this.getDoubleY() + amountY);
 	}
 
-	@NotNull
-	public Rectangle move(@NotNull final Dimension amount) {
+	public Rectangle move(final Dimension amount) {
 		return this.move(amount.getDoubleWidth(), amount.getDoubleHeight());
 	}
 
-	@NotNull
 	public Rectangle growX(final double amount) {
 		return this.setWidth(this.getWidth() + amount);
 	}
 
-	@NotNull
 	public Rectangle growY(final double amount) {
 		return this.setHeight(this.getHeight() + amount);
 	}
 
-	@NotNull
 	public Rectangle grow(final double amountX, final double amountY) {
 		return this.setSize(this.getWidth() + amountX, this.getHeight() + amountY);
 	}
 
-	@NotNull
 	public Rectangle shrinkX(final double amount) {
 		return this.setWidth(this.getWidth() - amount);
 	}
 
-	@NotNull
 	public Rectangle shrinkY(final double amount) {
 		return this.setHeight(this.getHeight() - amount);
 	}
 
-	@NotNull
 	public Rectangle shrink(final double amountX, final double amountY) {
 		return this.setSize(this.getWidth() - amountX, this.getHeight() - amountY);
 	}
 
-	@NotNull
-	public Rectangle grow(@NotNull final Dimension size) {
+	public Rectangle grow(final Dimension size) {
 		return this.grow(size.getWidth(), size.getHeight());
 	}
 
@@ -143,7 +123,7 @@ public final class Rectangle {
 		return x >= this.getX() && x <= this.getMaxX() && y >= this.getY() && y <= this.getMaxY();
 	}
 
-	public boolean contains(@NotNull final Dimension position) {
+	public boolean contains(final Dimension position) {
 		return this.contains(position.getWidth(), position.getHeight());
 	}
 
@@ -151,28 +131,26 @@ public final class Rectangle {
 		return x >= this.getX() && x + width <= this.getMaxX() && y >= this.getY() && y + height <= this.getMaxY();
 	}
 
-	public boolean contains(final int x, final int y, @NotNull final Dimension size) {
+	public boolean contains(final int x, final int y, final Dimension size) {
 		return this.contains(x, y, size.getWidth(), size.getHeight());
 	}
 
-	public boolean contains(@NotNull final Dimension position, @NotNull final Dimension size) {
+	public boolean contains(final Dimension position, final Dimension size) {
 		return this.contains(position.getWidth(), position.getHeight(), size.getWidth(), size.getHeight());
 	}
 
-	public boolean contains(@NotNull final Dimension position, final int width, final int height) {
+	public boolean contains(final Dimension position, final int width, final int height) {
 		return this.contains(position.getWidth(), position.getHeight(), width, height);
 	}
 
-	public boolean contains(@NotNull final Rectangle rectangle) {
+	public boolean contains(final Rectangle rectangle) {
 		return this.contains(rectangle.getX(), rectangle.getY(), rectangle.getWidth(), rectangle.getHeight());
 	}
 
-	@NotNull
 	public Point getPosition() {
 		return this.position.toImmutable();
 	}
 
-	@NotNull
 	public Dimension getSize() {
 		return this.size.toImmutable();
 	}
@@ -225,7 +203,6 @@ public final class Rectangle {
 		return this.getDoubleY() + this.getDoubleHeight() / 2.0;
 	}
 
-	@NotNull
 	public final Point getCenter() {
 		return Point.create(this.getDoubleCenterX(), this.getDoubleCenterY());
 	}
@@ -246,43 +223,39 @@ public final class Rectangle {
 		return this.position.getDoubleY() + this.size.getDoubleHeight();
 	}
 
-	@NotNull
 	public Point getMaxPosition() {
 		return Point.create(this.getDoubleMaxX(), this.getDoubleMaxY());
 	}
 
-	@NotNull
 	public Rectangle toMutable() {
 		return this.mutable ? this : new Rectangle(
-				this.getDoubleX(), this.getDoubleY(),
-				this.getDoubleWidth(), this.getDoubleHeight(),
-				true
+			this.getDoubleX(), this.getDoubleY(),
+			this.getDoubleWidth(), this.getDoubleHeight(),
+			true
 		);
 	}
 
-	@NotNull
 	public Rectangle toImmutable() {
 		return this.mutable ? new Rectangle(
-				this.getDoubleX(), this.getDoubleY(),
-				this.getDoubleWidth(), this.getDoubleHeight(),
-				false
+			this.getDoubleX(), this.getDoubleY(),
+			this.getDoubleWidth(), this.getDoubleHeight(),
+			false
 		) : this;
 	}
 
-	@NotNull
 	public Rectangle copy() {
 		return new Rectangle(
-				this.getDoubleX(), this.getDoubleY(),
-				this.getDoubleWidth(), this.getDoubleHeight(),
-				this.mutable
+			this.getDoubleX(), this.getDoubleY(),
+			this.getDoubleWidth(), this.getDoubleHeight(),
+			this.mutable
 		);
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(
-				this.getDoubleX(), this.getDoubleY(),
-				this.getDoubleWidth(), this.getDoubleHeight()
+			this.getDoubleX(), this.getDoubleY(),
+			this.getDoubleWidth(), this.getDoubleHeight()
 		);
 	}
 
@@ -295,92 +268,78 @@ public final class Rectangle {
 			return false;
 		}
 		return this.getDoubleX() == other.getDoubleX() &&
-				this.getDoubleY() == other.getDoubleY() &&
-				this.getDoubleWidth() == other.getDoubleWidth() &&
-				this.getDoubleHeight() == other.getDoubleHeight();
+			this.getDoubleY() == other.getDoubleY() &&
+			this.getDoubleWidth() == other.getDoubleWidth() &&
+			this.getDoubleHeight() == other.getDoubleHeight();
 	}
 
 	@Override
 	public String toString() {
 		return "Rectangle[X=" + this.getDoubleX() + ",Y=" + this.getDoubleY() +
-				",Width=" + this.getDoubleWidth() + ",Height=" + this.getDoubleHeight() + ']';
+			",Width=" + this.getDoubleWidth() + ",Height=" + this.getDoubleHeight() + ']';
 	}
 
-	@NotNull
 	public static Rectangle create(final int x, final int y, final int width, final int height) {
 		return new Rectangle(x, y, width, height, false);
 	}
 
-	@NotNull
 	public static Rectangle create(final double x, final double y, final double width, final double height) {
 		return new Rectangle(x, y, width, height, false);
 	}
 
-	@NotNull
-	public static Rectangle create(@NotNull final Point position, @NotNull final Dimension size) {
+	public static Rectangle create(final Point position, final Dimension size) {
 		return new Rectangle(
-				position.getDoubleX(), position.getDoubleY(),
-				size.getDoubleWidth(), size.getDoubleHeight(),
-				false
+			position.getDoubleX(), position.getDoubleY(),
+			size.getDoubleWidth(), size.getDoubleHeight(),
+			false
 		);
 	}
 
-	@NotNull
-	public static Rectangle create(final int x, final int Y, @NotNull final Dimension size) {
+	public static Rectangle create(final int x, final int Y, final Dimension size) {
 		return new Rectangle(x, Y, size.getDoubleWidth(), size.getDoubleHeight(), false);
 	}
 
-	@NotNull
-	public static Rectangle create(final double x, final double Y, @NotNull final Dimension size) {
+	public static Rectangle create(final double x, final double Y, final Dimension size) {
 		return new Rectangle(x, Y, size.getDoubleWidth(), size.getDoubleHeight(), false);
 	}
 
-	@NotNull
-	public static Rectangle create(@NotNull final Point position, final int width, final int height) {
+	public static Rectangle create(final Point position, final int width, final int height) {
 		return new Rectangle(position.getDoubleX(), position.getDoubleY(), width, height, false);
 	}
 
-	@NotNull
-	public static Rectangle create(@NotNull final Point position, final double width, final double height) {
+	public static Rectangle create(final Point position, final double width, final double height) {
 		return new Rectangle(position.getDoubleX(), position.getDoubleY(), width, height, false);
 	}
 
-	@NotNull
 	public static Rectangle createMutable(final double x, final double y, final double width, final double height) {
 		return new Rectangle(x, y, width, height, true);
 	}
 
-	@NotNull
 	public static Rectangle createMutable(final int x, final int y, final int width, final int height) {
 		return new Rectangle(x, y, width, height, true);
 	}
 
-	@NotNull
-	public static Rectangle createMutable(@NotNull final Point position, @NotNull final Dimension size) {
+	public static Rectangle createMutable(final Point position, final Dimension size) {
 		return new Rectangle(
-				position.getDoubleX(), position.getDoubleY(),
-				size.getDoubleWidth(), size.getDoubleHeight(),
-				true
+			position.getDoubleX(), position.getDoubleY(),
+			size.getDoubleWidth(), size.getDoubleHeight(),
+			true
 		);
 	}
 
-	@NotNull
-	public static Rectangle createMutable(final int x, final int Y, @NotNull final Dimension size) {
+	public static Rectangle createMutable(final int x, final int Y, final Dimension size) {
 		return new Rectangle(x, Y, size.getDoubleWidth(), size.getDoubleHeight(), true);
 	}
 
-	@NotNull
-	public static Rectangle createMutable(final double x, final double Y, @NotNull final Dimension size) {
+	public static Rectangle createMutable(final double x, final double Y, final Dimension size) {
 		return new Rectangle(x, Y, size.getDoubleWidth(), size.getDoubleHeight(), true);
 	}
 
-	@NotNull
-	public static Rectangle createMutable(@NotNull final Point position, final int width, final int height) {
+	public static Rectangle createMutable(final Point position, final int width, final int height) {
 		return new Rectangle(position.getDoubleX(), position.getDoubleY(), width, height, true);
 	}
 
-	@NotNull
-	public static Rectangle createMutable(@NotNull final Point position, final double width, final double height) {
+	public static Rectangle createMutable(final Point position, final double width, final double height) {
 		return new Rectangle(position.getDoubleX(), position.getDoubleY(), width, height, true);
 	}
 }

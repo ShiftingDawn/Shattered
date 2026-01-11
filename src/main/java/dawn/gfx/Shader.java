@@ -22,7 +22,6 @@ import static org.lwjgl.opengl.GL20.glGetProgrami;
 import static org.lwjgl.opengl.GL20.glGetShaderi;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
-import static org.lwjgl.opengl.GL20.glUseProgram;
 import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
 
 public final class Shader {
@@ -52,11 +51,11 @@ public final class Shader {
 	}
 
 	public void bind() {
-		glUseProgram(this.program);
+		GlStateManager.bindShader(this.program);
 	}
 
 	public void unbind() {
-		glUseProgram(0);
+		GlStateManager.bindShader(0);
 	}
 
 	public void destroy() {
