@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 import static org.lwjgl.glfw.GLFW.GLFW_BLUE_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
@@ -29,9 +30,11 @@ import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwInitHint;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPlatformSupported;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.glfw.GLFW.nglfwGetFramebufferSize;
@@ -83,6 +86,9 @@ public final class GlfwSetup {
 		Display.setWidth(framebufferSize.get(0));
 		Display.setHeight(framebufferSize.get(1));
 		Display.setWindow(window);
+		glfwMakeContextCurrent(window);
+		glfwSwapInterval(1);
+		GL.createCapabilities();
 	}
 
 	public static void destroy() {

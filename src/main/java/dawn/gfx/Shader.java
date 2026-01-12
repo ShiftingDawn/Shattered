@@ -7,6 +7,7 @@ import dawn.asset.ResourceResolver;
 import dawn.asset.ShaderAsset;
 import dawn.lib.ExitException;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
 import static org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER;
@@ -29,15 +30,15 @@ public final class Shader {
 	private final @Getter ShaderAsset asset;
 	private final @Getter int program;
 
-	public Shader(final ResourceResolver resources, final ShaderAsset asset) {
+	private Shader(final ResourceResolver resources, final ShaderAsset asset, @Nullable final String vertexSource, @Nullable final String fragmentSource) {
 		this.asset = asset;
 		//Generate shaders and program
 		final int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		final int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		this.program = glCreateProgram();
 		//Load and compile shaders
-		Shader.compileShader(vertexShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "vert"));
-		Shader.compileShader(fragmentShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "frag"));
+		Shader.compileShader(vertexShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "vert"), vertexSource);
+		Shader.compileShader(fragmentShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "frag"), fragmentSource);
 		//Configure shaders and program
 		glAttachShader(this.program, fragmentShader);
 		glAttachShader(this.program, vertexShader);
@@ -52,6 +53,10 @@ public final class Shader {
 		glDeleteShader(fragmentShader);
 	}
 
+	public Shader(final ResourceResolver resources, final ShaderAsset asset) {
+		this(resources, asset, null, null);
+	}
+
 	public void bind() {
 		GlStateManager.bindShader(this.program);
 	}
@@ -64,15 +69,17 @@ public final class Shader {
 		glDeleteProgram(this.program);
 	}
 
-	private static void compileShader(final int shader, final ResourceResolver resources, final String shaderPath) {
+	private static void compileShader(final int shader, final ResourceResolver resources, final String shaderPath, @Nullable String shaderSource) {
 		try {
-			final InputStream stream = resources.getStream(shaderPath);
-			if (stream == null) {
-				GlfwSetup.LOGGER.fatal("Could not load shader file: {}", shaderPath);
-				throw new FileNotFoundException();
+			if (shaderSource == null) {
+				final InputStream stream = resources.getStream(shaderPath);
+				if (stream == null) {
+					GlfwSetup.LOGGER.fatal("Could not load shader file: {}", shaderPath);
+					throw new FileNotFoundException();
+				}
+				shaderSource = new String(stream.readAllBytes());
+				stream.close();
 			}
-			final String shaderSource = new String(stream.readAllBytes());
-			stream.close();
 			glShaderSource(shader, shaderSource);
 			glCompileShader(shader);
 			if (glGetShaderi(shader, GL_COMPILE_STATUS) != GL_TRUE) {
@@ -82,5 +89,9 @@ public final class Shader {
 			GlfwSetup.LOGGER.fatal("Could not compile shader: {}", shaderPath);
 			throw new ExitException();
 		}
+	}
+
+	public static Shader newSimpleShader(final ResourceResolver resources, final ShaderAsset asset, final String vertexSource, final String fragmentSource) {
+		return new Shader(resources, asset, vertexSource, fragmentSource);
 	}
 }

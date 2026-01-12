@@ -64,7 +64,7 @@ public final class TextureManager {
 			if (buffer == null) {
 				throw new FileNotFoundException("Texture file does not exist. Expected path: " + path);
 			}
-			final Texture result = this.makeTextureFromData(buffer);
+			final Texture result = TextureManager.makeTextureFromData(buffer, true);
 			this.mapping.put(texture.getRegistryKey(), result);
 			TextureManager.LOGGER.debug("\t\tDone");
 		} catch (final IOException e) {
@@ -74,13 +74,17 @@ public final class TextureManager {
 		}
 	}
 
-	private Texture makeTextureFromData(final ByteBuffer textureData) {
+	public static Texture makeTextureFromData(final ByteBuffer textureData, final boolean log) {
 		try (MemoryStack stack = stackPush()) {
-			TextureManager.LOGGER.debug("\t\tAllocating texture data");
+			if (log) {
+				TextureManager.LOGGER.debug("\t\tAllocating texture data");
+			}
 			final IntBuffer widthPtr = stack.mallocInt(1);
 			final IntBuffer heightPtr = stack.mallocInt(1);
 			final IntBuffer channelPtr = stack.mallocInt(1);
-			TextureManager.LOGGER.debug("\t\tLoading texture data");
+			if (log) {
+				TextureManager.LOGGER.debug("\t\tLoading texture data");
+			}
 			final ByteBuffer image = stbi_load_from_memory(textureData, widthPtr, heightPtr, channelPtr, 0);
 			if (image == null) {
 				TextureManager.LOGGER.fatal("Could not load image: {}", stbi_failure_reason());
@@ -89,8 +93,10 @@ public final class TextureManager {
 			final int width = widthPtr.get(0);
 			final int height = heightPtr.get(0);
 			final int glFormat = channelPtr.get(0) == 4 ? GL_RGBA : GL_RGB;
-			TextureManager.LOGGER.debug("\t\tLoading GL data");
-			final int textureId = this.makeTextureId();
+			if (log) {
+				TextureManager.LOGGER.debug("\t\tLoading GL data");
+			}
+			final int textureId = TextureManager.makeTextureId();
 			glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, image);
 			stbi_image_free(image);
 			return new Texture(textureId, width, height);
@@ -115,7 +121,7 @@ public final class TextureManager {
 		return this.getTexture(texture.getRegistryKey());
 	}
 
-	private int makeTextureId() {
+	private static int makeTextureId() {
 		return Util.make(glGenTextures(), id -> {
 			glBindTexture(GL_TEXTURE_2D, id);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -135,7 +141,7 @@ public final class TextureManager {
 		final ByteBuffer buffer = BufferUtils.createByteBuffer(data.length);
 		buffer.put(data);
 		buffer.flip();
-		final Texture result = this.makeTextureFromData(buffer);
+		final Texture result = TextureManager.makeTextureFromData(buffer, true);
 		this.mapping.put(this.missingTextureAsset.getRegistryKey(), result);
 		TextureManager.LOGGER.debug("\t\tDone");
 	}

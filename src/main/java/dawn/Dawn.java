@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Locale;
 import dawn.asset.AssetManager;
 import dawn.asset.ResourceResolver;
-import dawn.gfx.Display;
 import dawn.gfx.GlfwSetup;
 import dawn.lib.ArgHandler;
 import dawn.lib.ExitException;
@@ -48,10 +47,8 @@ public final class Dawn {
 	private void init() {
 		GlfwSetup.init(this.args.displayWidth, this.args.displayHeight);
 		RegistrySetup.load(this.resources);
-		Display.activate();
 		this.assets.init();
-		this.renderManager = new RenderManager(this.resources, this.assets);
-		this.runtime.init();
+		this.renderManager = new RenderManager(this, this.assets);
 	}
 
 	public void stop() {

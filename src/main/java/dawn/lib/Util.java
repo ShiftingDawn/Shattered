@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 public final class Util {
 
-	public static <T> T make(T obj, Consumer<T> mod) {
+	public static <T> T make(final T obj, final Consumer<T> mod) {
 		mod.accept(obj);
 		return obj;
 	}
@@ -17,6 +17,13 @@ public final class Util {
 		} catch (final Throwable ignored) {
 			return fallback.get();
 		}
+	}
+
+	public static <T> T makeIf(final T obj, final boolean flag, final Consumer<T> mod) {
+		if (flag) {
+			mod.accept(obj);
+		}
+		return obj;
 	}
 
 	private Util() {
