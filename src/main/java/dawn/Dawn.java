@@ -7,6 +7,7 @@ import dawn.asset.AssetManager;
 import dawn.asset.ResourceResolver;
 import dawn.gfx.Display;
 import dawn.gfx.GlfwSetup;
+import dawn.lib.ArgHandler;
 import dawn.lib.ExitException;
 import dawn.lib.Workspace;
 import dawn.registry.RegistrySetup;
@@ -22,6 +23,7 @@ public final class Dawn {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private static @Getter Dawn dawn;
 	private final Runtime runtime = new Runtime();
+	private final @Getter ArgHandler args;
 	private final @Getter Workspace workspace;
 	private final @Getter ResourceResolver resources;
 	private final @Getter AssetManager assets;
@@ -29,7 +31,7 @@ public final class Dawn {
 
 	private Dawn(final File rootDir, final String[] args) {
 		Dawn.dawn = this;
-		//TODO handle args
+		this.args = new ArgHandler(args);
 		try {
 			this.workspace = new Workspace(rootDir);
 		} catch (final IOException e) {
@@ -44,7 +46,7 @@ public final class Dawn {
 	}
 
 	private void init() {
-		GlfwSetup.init();
+		GlfwSetup.init(this.args.displayWidth, this.args.displayHeight);
 		RegistrySetup.load(this.resources);
 		Display.activate();
 		this.assets.init();

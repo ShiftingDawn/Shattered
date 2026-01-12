@@ -40,7 +40,7 @@ application {
 	applicationDefaultJvmArgs = [
 		"--enable-native-access=ALL-UNNAMED",
 		"-Ddawn.workspace.root=$rootDir/run",
-		"-Ddawn.log.level=TRACE"
+		"-Ddawn.log.level=TRACE",
 	]
 }
 

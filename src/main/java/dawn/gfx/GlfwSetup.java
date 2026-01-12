@@ -42,7 +42,9 @@ public final class GlfwSetup {
 
 	public static final Logger LOGGER = Dawn.getLogger("Display");
 
-	public static void init() {
+	public static void init(final int displayWidth, final int displayHeight) {
+		Display.setWidth(displayWidth);
+		Display.setHeight(displayHeight);
 		if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
 			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 		}
