@@ -26,7 +26,7 @@ final class JsonValidator {
 		return Arrays.stream(clazz.getDeclaredFields()).filter(predicate).toArray(Field[]::new);
 	}
 
-	private static Field[] filterFields(final Field[] fields, final Predicate<Field> predicate) {
+	static Field[] filterFields(final Field[] fields, final Predicate<Field> predicate) {
 		return Arrays.stream(fields).filter(predicate).toArray(Field[]::new);
 	}
 
@@ -59,6 +59,7 @@ final class JsonValidator {
 			}
 		}
 		JsonValidator.validateRequiredGroups(object, requiredFields, path);
+		BooleanControlledFieldValidator.validateRequiredByBooleanFields(object, allFields, path);
 		final Field[] nestedClassFields = JsonValidator.filterFields(allFields, field -> GsonHelper.GSON.getAdapter(field.getType()) instanceof ReflectiveTypeAdapterFactory.Adapter);
 		for (final Field nested : nestedClassFields) {
 			final String name = JsonValidator.getFieldName(nested);
@@ -72,9 +73,9 @@ final class JsonValidator {
 			return;
 		}
 		final Set<String> groups = Arrays.stream(fields)
-				.map(field -> field.getAnnotation(Json.Required.class).group()[0])
-				.map(Json.Required.OR::groupName)
-				.collect(Collectors.toSet());
+			.map(field -> field.getAnnotation(Json.Required.class).group()[0])
+			.map(Json.Required.OR::groupName)
+			.collect(Collectors.toSet());
 		final HashMap<String, Map<String, List<Field>>> groupedFields = new HashMap<>();
 		for (final String group : groups) {
 			final Map<String, List<Field>> indexedFields = new HashMap<>();

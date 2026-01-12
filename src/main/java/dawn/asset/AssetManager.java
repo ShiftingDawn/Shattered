@@ -12,10 +12,12 @@ public final class AssetManager {
 	private static final Logger LOGGER = Dawn.getLogger("Assets");
 	private final @Getter ResourceResolver resources;
 	private final @Getter Workspace workspace;
+	private final @Getter ShaderManager shaders = new ShaderManager(this);
 	private final @Getter TextureManager textures = new TextureManager(this);
 
 	public void init() {
 		AssetManager.LOGGER.info("Reloading assets");
+		this.shaders.init();
 		this.textures.init();
 	}
 }

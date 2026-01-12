@@ -29,6 +29,7 @@ public final class RegistrySetup {
 	}
 
 	private static void loadRegistries(final ResourceResolver resources, final String domain) throws IOException {
+		RegistrySetup.loadRegistry(resources, domain, Registries.SHADERS);
 		RegistrySetup.loadRegistry(resources, domain, Registries.TEXTURES);
 	}
 

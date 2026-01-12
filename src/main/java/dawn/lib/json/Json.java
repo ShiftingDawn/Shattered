@@ -29,6 +29,20 @@ public @interface Json {
 
 			String groupIndex();
 		}
+
+		@Retention(RetentionPolicy.RUNTIME)
+		@Target(ElementType.FIELD)
+		@interface When {
+
+			String fieldName();
+		}
+
+		@Retention(RetentionPolicy.RUNTIME)
+		@Target(ElementType.FIELD)
+		@interface WhenNot {
+
+			String fieldName();
+		}
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

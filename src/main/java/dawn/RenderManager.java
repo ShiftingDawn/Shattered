@@ -11,6 +11,7 @@ import dawn.gfx.ShaderProps;
 import dawn.gfx.Tessellator;
 import dawn.init.Textures;
 import dawn.lib.Color;
+import dawn.registry.Identifier;
 import lombok.Getter;
 import static org.lwjgl.opengl.GL11.glViewport;
 
@@ -20,8 +21,8 @@ public final class RenderManager {
 	private final @Getter Tessellator tessellator;
 
 	RenderManager(final ResourceResolver resources, final AssetManager assets) {
-		Display.activate();
-		this.shader = new Shader(resources, "root", "outColor");
+		//TODO handle root shader reloading
+		this.shader = assets.getShaders().getShader(Identifier.of("root"));
 		this.shader.bind();
 		this.tessellator = new Tessellator(this.shader, assets.getTextures());
 		EventBus.register(DisplayResizedEvent.class, _ -> this.resetShader());
@@ -35,7 +36,7 @@ public final class RenderManager {
 
 	private void resetShader() {
 		glViewport(0, 0, Display.getWidth(), Display.getHeight());
-		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, "projectionMatrix"), false, MatrixUtils.ortho());
-		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, "modelViewMatrix"), false, MatrixUtils.identity());
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixProjection()), false, MatrixUtils.ortho());
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixModelView()), false, MatrixUtils.identity());
 	}
 }

@@ -4,8 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import dawn.asset.ResourceResolver;
+import dawn.asset.ShaderAsset;
 import dawn.lib.ExitException;
-import dawn.registry.Identifier;
 import lombok.Getter;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
 import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
@@ -26,20 +26,22 @@ import static org.lwjgl.opengl.GL30.glBindFragDataLocation;
 
 public final class Shader {
 
+	private final @Getter ShaderAsset asset;
 	private final @Getter int program;
 
-	public Shader(final ResourceResolver resources, final String path, final String outputColorName) {
+	public Shader(final ResourceResolver resources, final ShaderAsset asset) {
+		this.asset = asset;
 		//Generate shaders and program
 		final int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		final int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		this.program = glCreateProgram();
 		//Load and compile shaders
-		Shader.compileShader(vertexShader, resources, resources.makePath(Identifier.of(path), null, "vert"));
-		Shader.compileShader(fragmentShader, resources, resources.makePath(Identifier.of(path), null, "frag"));
+		Shader.compileShader(vertexShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "vert"));
+		Shader.compileShader(fragmentShader, resources, resources.makePath(asset.getRegistryKey(), "shader", "frag"));
 		//Configure shaders and program
 		glAttachShader(this.program, fragmentShader);
 		glAttachShader(this.program, vertexShader);
-		glBindFragDataLocation(fragmentShader, 0, outputColorName);
+		glBindFragDataLocation(fragmentShader, 0, asset.getPropOutColor());
 		glLinkProgram(this.program);
 		if (glGetProgrami(this.program, GL_LINK_STATUS) != GL_TRUE) {
 			GlfwSetup.LOGGER.fatal("Could not link shader program");

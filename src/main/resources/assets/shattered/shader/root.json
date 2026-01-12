@@ -1,0 +1,9 @@
+{
+	"can_texture": true,
+	"can_color": true,
+	"prop_out_color": "outColor",
+	"prop_matrix_rojection": "projectionMatrix",
+	"prop_matrix_modelview": "modelViewMatrix",
+	"prop_matrix_tessellator_transform": "globalTransformMatrix",
+	"prop_enable_textures": "enableTextures"
+}

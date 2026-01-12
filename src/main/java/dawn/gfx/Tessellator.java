@@ -2,6 +2,7 @@ package dawn.gfx;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+import dawn.asset.ShaderAsset;
 import dawn.asset.Texture;
 import dawn.asset.TextureManager;
 import dawn.lib.Color;
@@ -114,10 +115,16 @@ public final class Tessellator {
 	}
 
 	public Tessellator draw(final Color color) {
+		final ShaderAsset data = this.shader.getAsset();
+		if (!data.isCanColor()) {
+			throw new IllegalStateException("The currently bound shader '%s' does not support rendering colors".formatted(data.getRegistryKey()));
+		}
 		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_COLOR, 4, GL_TRIANGLE_FAN, () -> {
 			this.shader.bind();
-			ShaderProps.setUniform1(ShaderProps.getNamedLocation(this.shader, "enableTextures"), GL_FALSE);
-			ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, "globalTransformMatrix"), false, this.matrixStack);
+			if (data.isCanTexture()) {
+				ShaderProps.setUniform1(ShaderProps.getNamedLocation(this.shader, data.getPropEnableTexture()), GL_FALSE);
+			}
+			ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, data.getPropMatrixTessellatorTransform()), false, this.matrixStack);
 		});
 		final float maxX = this.bounds[0] + this.bounds[2];
 		final float maxY = this.bounds[1] + this.bounds[3];
@@ -130,12 +137,16 @@ public final class Tessellator {
 	}
 
 	public Tessellator draw(final Identifier texture, final Color tint) {
+		final ShaderAsset data = this.shader.getAsset();
+		if (!data.isCanTexture()) {
+			throw new IllegalStateException("The currently bound shader '%s' does not support rendering textures".formatted(data.getRegistryKey()));
+		}
 		final Texture tex = this.textures.getTexture(texture);
 		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, 4, GL_TRIANGLE_FAN, () -> {
 			this.shader.bind();
 			GlStateManager.bindTexture(tex.id());
-			ShaderProps.setUniform1(ShaderProps.getNamedLocation(this.shader, "enableTextures"), GL_TRUE);
-			ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, "globalTransformMatrix"), false, this.matrixStack);
+			ShaderProps.setUniform1(ShaderProps.getNamedLocation(this.shader, data.getPropEnableTexture()), GL_TRUE);
+			ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, data.getPropMatrixTessellatorTransform()), false, this.matrixStack);
 		});
 		final float maxX = this.bounds[0] + this.bounds[2];
 		final float maxY = this.bounds[1] + this.bounds[3];
