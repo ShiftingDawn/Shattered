@@ -50,6 +50,10 @@ public final class Identifier {
 		return this.packed;
 	}
 
+	public String toPathSafeString() {
+		return this.toString().replaceAll(Identifier.DOMAIN_SEPARATOR, "_");
+	}
+
 	public static Identifier of(final String str) {
 		String[] domainAndPath = str.split(Identifier.DOMAIN_SEPARATOR, 2);
 		if (domainAndPath.length == 1) {

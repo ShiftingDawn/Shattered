@@ -45,12 +45,11 @@ final class ShaderRegistryContentFactory implements RegistryContentFactory<Shade
 			}
 			return result;
 		} catch (final FileNotFoundException ignored) {
-			logger.debug("Could not find metadata for texture \"{}\", assuming defaults. Expected path: {}", resource, path);
+			logger.error("Could not find metadata for shader \"{}\", skipping. Expected path: {}", resource, path);
 			return null;
 		} catch (final IOException | JsonIOException | JsonSyntaxException e) {
-			logger.error("Could not read texture metadata for texture \"{}\"", resource);
+			logger.error("Could not read shader metadata for shader \"{}\"", resource);
 			logger.error(e);
-			logger.error("\tIgnoring the metadata and loading as a default texture");
 			return null;
 		}
 	}

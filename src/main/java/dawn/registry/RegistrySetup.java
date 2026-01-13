@@ -37,7 +37,8 @@ public final class RegistrySetup {
 	private static CompletableFuture<Void> loadRegistries(final ResourceResolver resources, final String domain) throws IOException, ExecutionException, InterruptedException {
 		final List<CompletableFuture<Void>> futures = List.of(
 			RegistrySetup.loadRegistry(resources, domain, Registries.SHADERS),
-			RegistrySetup.loadRegistry(resources, domain, Registries.TEXTURES)
+			RegistrySetup.loadRegistry(resources, domain, Registries.TEXTURES),
+			RegistrySetup.loadRegistry(resources, domain, Registries.FONTS)
 		);
 		return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
 	}
