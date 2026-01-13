@@ -13,7 +13,7 @@ import dawn.lib.json.GsonHelper;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-public final class FontRegistryContentFactory implements RegistryContentFactory<FontAsset> {
+final class FontRegistryContentFactory implements RegistryContentFactory<FontAsset> {
 
 	@Override
 	public void make(final Logger logger, final ResourceResolver assets, final Registry<FontAsset> registry, final Identifier registryKey) {

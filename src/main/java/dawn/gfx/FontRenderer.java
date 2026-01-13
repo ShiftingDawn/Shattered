@@ -121,7 +121,7 @@ public final class FontRenderer {
 			builder.position(x0, y1).color(call.color()).uv(uvs[0], uvs[3]).endVertex();
 			builder.position(x1, y0).color(call.color()).uv(uvs[2], uvs[1]).endVertex();
 			builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
-			if (i++ < call.txt().length() - 1) {
+			if (i < call.txt().length() - 1) {
 				//Connect to next char so we can write the whole string in 1 call
 				builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
 			}
