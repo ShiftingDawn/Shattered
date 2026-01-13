@@ -3,23 +3,28 @@ package dawn.asset;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import dawn.Dawn;
 import dawn.gfx.Display;
 import dawn.registry.Identifier;
 import dawn.registry.Registries;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
+import it.unimi.dsi.fastutil.chars.Char2ObjectMaps;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
-import org.joml.Vector4i;
 import org.jspecify.annotations.NullUnmarked;
 import org.lwjgl.stb.STBIWriteCallback;
 import org.lwjgl.stb.STBTTBakedChar;
+import org.lwjgl.stb.STBTTFontinfo;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import static org.lwjgl.opengl.GL11.glDeleteTextures;
 import static org.lwjgl.stb.STBImageWrite.stbi_write_png_to_func;
 import static org.lwjgl.stb.STBTruetype.stbtt_BakeFontBitmap;
+import static org.lwjgl.stb.STBTruetype.stbtt_GetFontVMetrics;
+import static org.lwjgl.stb.STBTruetype.stbtt_InitFont;
 import static org.lwjgl.system.MemoryUtil.memAlloc;
 import static org.lwjgl.system.MemoryUtil.memCopy;
 import static org.lwjgl.system.MemoryUtil.memFree;
@@ -28,7 +33,7 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 public final class FontManager {
 
 	//TODO make variable
-	private static final int FONT_HEIGHT = 24;
+	private static final int FONT_HEIGHT = 64;
 	private static final int FONT_CHARS = 95;
 	private static final int FONT_CHAR_START = 32;
 	private static final int FONT_SIZE_START = 64;
@@ -62,7 +67,18 @@ public final class FontManager {
 			FontManager.LOGGER.error(e);
 			return;
 		}
-
+		FontManager.LOGGER.debug("\t\tLoading metadata");
+		final float lineHeight;
+		try (STBTTFontinfo fontInfo = STBTTFontinfo.create()) {
+			stbtt_InitFont(fontInfo, fileDataBuffer);
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				final IntBuffer ascentPtr = stack.mallocInt(1);
+				final IntBuffer descentPtr = stack.mallocInt(1);
+				final IntBuffer lineGapPtr = stack.mallocInt(1);
+				stbtt_GetFontVMetrics(fontInfo, ascentPtr, descentPtr, lineGapPtr);
+				lineHeight = ascentPtr.get() - descentPtr.get() + lineGapPtr.get();
+			}
+		}
 		FontManager.LOGGER.debug("\t\tBaking bitmap");
 		final STBTTBakedChar.Buffer charData = STBTTBakedChar.create(FontManager.FONT_CHARS);
 		final BakeResult bakeResult = FontManager.createBakedBuffer(FontManager.FONT_SIZE_START, FontManager.FONT_SIZE_START, fileDataBuffer, charData);
@@ -79,10 +95,15 @@ public final class FontManager {
 		stbi_write_png_to_func(writer, Display.getWindow(), bakeResult.width, bakeResult.height, 4, imageData, bakeResult.width * 4);
 		this.assets.dumpAsset("font/%s.png".formatted(font.getRegistryKey().toPathSafeString()), writer.data);
 		FontManager.LOGGER.debug("\t\tCalculating glyph data");
-		final Char2ObjectArrayMap<Vector4i> charPositions = new Char2ObjectArrayMap<>();
+		final Char2ObjectArrayMap<Font.Glyph> glyphs = new Char2ObjectArrayMap<>();
 		for (int i = 0; i < charData.capacity(); ++i) {
 			final STBTTBakedChar bakedChar = charData.get(i);
-			charPositions.put((char) (i + 32), new Vector4i(bakedChar.x0(), bakedChar.y0(), bakedChar.x1(), bakedChar.y1()));
+			final Font.Glyph glyph = new Font.Glyph(
+				bakedChar.x0(), bakedChar.y0(), bakedChar.x1(), bakedChar.y1(),
+				bakedChar.xoff(), bakedChar.yoff(),
+				bakedChar.xadvance()
+			);
+			glyphs.put((char) (i + 32), glyph);
 		}
 		FontManager.LOGGER.debug("\t\tGenerating data");
 		writer.data.position(0);
@@ -92,7 +113,7 @@ public final class FontManager {
 		charData.free();
 		MemoryUtil.memFree(imageData);
 		MemoryUtil.memFree(bakeResult.buffer());
-		final Font result = new Font(font, fontTexture, charPositions);
+		final Font result = new Font(font, fontTexture, Char2ObjectMaps.unmodifiable(glyphs), lineHeight, FontManager.FONT_HEIGHT);
 		this.mapping.put(font.getRegistryKey(), result);
 		FontManager.LOGGER.debug("\t\tDone");
 	}
