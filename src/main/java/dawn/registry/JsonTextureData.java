@@ -39,16 +39,24 @@ class JsonTextureData {
 
 	public static final class Bordered extends JsonTextureData {
 
+		@SerializedName("border")
+		@Json.Required(group = @Json.Required.OR(groupName = "border_size", groupIndex = "1"))
+		Integer borderSize;
+
 		@SerializedName("border_top")
+		@Json.Required(group = @Json.Required.OR(groupName = "border_size", groupIndex = "2"))
 		Integer borderTop;
 
 		@SerializedName("border_bottom")
+		@Json.Required(group = @Json.Required.OR(groupName = "border_size", groupIndex = "2"))
 		Integer borderBottom;
 
 		@SerializedName("border_left")
+		@Json.Required(group = @Json.Required.OR(groupName = "border_size", groupIndex = "2"))
 		Integer borderLeft;
 
 		@SerializedName("border_right")
+		@Json.Required(group = @Json.Required.OR(groupName = "border_size", groupIndex = "2"))
 		Integer borderRight;
 	}
 

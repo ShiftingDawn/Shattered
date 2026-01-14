@@ -64,7 +64,7 @@ public final class TextureManager {
 			if (buffer == null) {
 				throw new FileNotFoundException("Texture file does not exist. Expected path: " + path);
 			}
-			final Texture result = TextureManager.makeTextureFromData(buffer, true);
+			final Texture result = TextureManager.makeTextureFromData(texture, buffer, true);
 			this.mapping.put(texture.getRegistryKey(), result);
 			TextureManager.LOGGER.debug("\t\tDone");
 		} catch (final IOException e) {
@@ -74,7 +74,7 @@ public final class TextureManager {
 		}
 	}
 
-	public static Texture makeTextureFromData(final ByteBuffer textureData, final boolean log) {
+	public static Texture makeTextureFromData(final TextureAsset assetData, final ByteBuffer textureData, final boolean log) {
 		try (MemoryStack stack = stackPush()) {
 			if (log) {
 				TextureManager.LOGGER.debug("\t\tAllocating texture data");
@@ -99,7 +99,7 @@ public final class TextureManager {
 			final int textureId = TextureManager.makeTextureId();
 			glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, image);
 			stbi_image_free(image);
-			return new Texture(textureId, width, height);
+			return new Texture(assetData, textureId, width, height);
 		}
 	}
 
@@ -141,7 +141,7 @@ public final class TextureManager {
 		final ByteBuffer buffer = BufferUtils.createByteBuffer(data.length);
 		buffer.put(data);
 		buffer.flip();
-		final Texture result = TextureManager.makeTextureFromData(buffer, true);
+		final Texture result = TextureManager.makeTextureFromData(this.missingTextureAsset, buffer, true);
 		this.mapping.put(this.missingTextureAsset.getRegistryKey(), result);
 		TextureManager.LOGGER.debug("\t\tDone");
 	}

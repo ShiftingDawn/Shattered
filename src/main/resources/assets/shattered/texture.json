@@ -1,3 +1,5 @@
 [
-	"shattered:argon"
+	"shattered:argon",
+	"shattered:gui/background",
+	"shattered:gui/button"
 ]

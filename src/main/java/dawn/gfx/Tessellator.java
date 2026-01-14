@@ -7,6 +7,7 @@ import java.util.function.Function;
 import dawn.Dawn;
 import dawn.asset.ShaderAsset;
 import dawn.asset.Texture;
+import dawn.asset.TextureAsset;
 import dawn.lib.Color;
 import dawn.lib.Util;
 import dawn.lib.math.Dimension;
@@ -216,32 +217,77 @@ public final class Tessellator {
 	}
 
 	private static void render(final DrawCall call, final Shader shader, final ShaderAsset data) {
-		final boolean doTexture = call.texture != null;
-		if (doTexture) {
+		if (call.texture() != null) {
 			if (!data.isCanTexture()) {
 				throw new IllegalStateException("The currently bound shader '%s' does not support rendering textures".formatted(data.getRegistryKey()));
 			}
 		} else if (!data.isCanColor()) {
 			throw new IllegalStateException("The currently bound shader '%s' does not support rendering colors".formatted(data.getRegistryKey()));
 		}
-		final VertexFormat vertexFormat = doTexture ? VertexFormats.FORMAT_TEXTURE : VertexFormats.FORMAT_COLOR;
-		final BufferBuilder builder = new BufferBuilder(vertexFormat, 4, GL_TRIANGLE_FAN, () -> {
+		final float x0 = call.bounding()[0];
+		final float y0 = call.bounding()[1];
+		final float x1 = x0 + call.bounding()[2];
+		final float y1 = y0 + call.bounding()[3];
+		if (call.texture() == null) {
+			final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_COLOR, 4, GL_TRIANGLE_FAN, () -> {
+				shader.bind();
+				if (data.isCanTexture()) {
+					ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, data.getPropEnableTexture()), GL_FALSE);
+				}
+				ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, call.matrixStack());
+			});
+			builder.position(x0, y0).color(call.color()[0]).endVertex();
+			builder.position(x0, y1).color(call.color()[1]).endVertex();
+			builder.position(x1, y1).color(call.color()[2]).endVertex();
+			builder.position(x1, y0).color(call.color()[3]).endVertex();
+			builder.draw();
+		} else {
+			final Texture tex = call.texture();
+			if (tex.asset() instanceof final TextureAsset.Bordered bordered) {
+				final float ix0 = x0 + bordered.borderLeft;
+				final float iy0 = y0 + bordered.borderTop;
+				final float ix1 = x1 - bordered.borderRight;
+				final float iy1 = y1 - bordered.borderBottom;
+				final float[] uvs = Tessellator.normalizeUV(tex, call.uv());
+				final float[] iuvs = Tessellator.normalizeUV(tex, Util.make(new float[4], arr -> {
+					arr[0] = call.uv[0] + bordered.borderLeft;
+					arr[1] = call.uv[1] + bordered.borderTop;
+					arr[2] = call.uv[2] - bordered.borderRight;
+					arr[3] = call.uv[3] - bordered.borderBottom;
+				}));
+				//Corners
+				Tessellator.renderInternal(shader, data, tex, x0, y0, ix0, iy0, call.color(), call.matrixStack(), uvs[0], uvs[1], iuvs[0], iuvs[1]);
+				Tessellator.renderInternal(shader, data, tex, ix1, y0, x1, iy0, call.color(), call.matrixStack(), iuvs[2], uvs[1], uvs[2], iuvs[1]);
+				Tessellator.renderInternal(shader, data, tex, x0, iy1, ix0, y1, call.color(), call.matrixStack(), uvs[0], iuvs[3], iuvs[0], uvs[3]);
+				Tessellator.renderInternal(shader, data, tex, ix1, iy1, x1, y1, call.color(), call.matrixStack(), iuvs[2], iuvs[3], uvs[2], uvs[3]);
+				//Sides
+				Tessellator.renderInternal(shader, data, tex, ix0, y0, ix1, iy0, call.color(), call.matrixStack(), iuvs[0], uvs[1], iuvs[2], iuvs[1]);
+				Tessellator.renderInternal(shader, data, tex, x0, iy0, ix0, iy1, call.color(), call.matrixStack(), uvs[0], iuvs[1], iuvs[0], iuvs[3]);
+				Tessellator.renderInternal(shader, data, tex, ix1, iy0, x1, iy1, call.color(), call.matrixStack(), iuvs[2], iuvs[1], uvs[2], iuvs[3]);
+				Tessellator.renderInternal(shader, data, tex, ix0, iy1, ix1, y1, call.color(), call.matrixStack(), iuvs[0], iuvs[3], iuvs[2], uvs[3]);
+				//Center
+				Tessellator.renderInternal(shader, data, tex, ix0, iy0, ix1, iy1, call.color(), call.matrixStack(), iuvs[0], iuvs[1], iuvs[2], iuvs[3]);
+			} else {
+				final float[] uvs = Tessellator.normalizeUV(tex, call.uv());
+				Tessellator.renderInternal(shader, data, tex, x0, y0, x1, y1, call.color(), call.matrixStack(), uvs[0], uvs[1], uvs[2], uvs[3]);
+			}
+		}
+	}
+
+	private static void renderInternal(
+		final Shader shader, final ShaderAsset data, final Texture texture, final float x0, final float y0, final float x1, final float y1, final Color[] colors, final Matrix4f transform,
+		final float u0, final float v0, final float u1, final float v1
+	) {
+		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, 4, GL_TRIANGLE_FAN, () -> {
 			shader.bind();
-			if (doTexture) {
-				GlStateManager.bindTexture(call.texture.id());
-			}
-			if (data.isCanTexture()) {
-				ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, data.getPropEnableTexture()), doTexture ? GL_TRUE : GL_FALSE);
-			}
-			ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, call.matrixStack);
+			GlStateManager.bindTexture(texture.id());
+			ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, data.getPropEnableTexture()), GL_TRUE);
+			ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, transform);
 		});
-		final float maxX = call.bounding[0] + call.bounding[2];
-		final float maxY = call.bounding[1] + call.bounding[3];
-		final float[] uvs = Tessellator.normalizeUV(call.texture, call.uv);
-		Util.makeIf(builder.position(call.bounding[0], call.bounding[1]).color(call.color[0]), doTexture, vx -> vx.uv(uvs[0], uvs[1])).endVertex();
-		Util.makeIf(builder.position(call.bounding[0], maxY).color(call.color[1]), doTexture, vx -> vx.uv(uvs[0], uvs[3])).endVertex();
-		Util.makeIf(builder.position(maxX, maxY).color(call.color[2]), doTexture, vx -> vx.uv(uvs[2], uvs[3])).endVertex();
-		Util.makeIf(builder.position(maxX, call.bounding[1]).color(call.color[3]), doTexture, vx -> vx.uv(uvs[2], uvs[1])).endVertex();
+		builder.position(x0, y0).color(colors[0]).uv(u0, v0).endVertex();
+		builder.position(x0, y1).color(colors[1]).uv(u0, v1).endVertex();
+		builder.position(x1, y1).color(colors[2]).uv(u1, v1).endVertex();
+		builder.position(x1, y0).color(colors[3]).uv(u1, v0).endVertex();
 		builder.draw();
 	}
 
@@ -249,16 +295,24 @@ public final class Tessellator {
 		this.drawing = false;
 	}
 
-	private static float[] normalizeUV(final @Nullable Texture texture, final float[] uvs) {
-		if (texture == null) {
-			return new float[0];
-		}
-		final float[] result = new float[4];
-		result[0] = uvs[0] / (float) texture.width();
-		result[1] = uvs[1] / (float) texture.height();
-		result[2] = uvs[2] / (float) texture.width();
-		result[3] = uvs[3] / (float) texture.height();
-		return result;
+	private static float[] normalizeUV(final Texture texture, final float[] uvs) {
+		return new float[] {
+			Tessellator.normalizeUV(texture, uvs[0], true),
+			Tessellator.normalizeUV(texture, uvs[1], false),
+			Tessellator.normalizeUV(texture, uvs[2], true),
+			Tessellator.normalizeUV(texture, uvs[3], false),
+		};
+	}
+
+	private static float normalizeUV(final Texture texture, final float uv, final boolean x) {
+		return uv / (float) (x ? texture.width() : texture.height());
+	}
+
+	private static float[] replaceUV(final float[] uvs, final float uv, final int index) {
+		final float[] copy = new float[uvs.length];
+		System.arraycopy(uvs, 0, copy, 0, uvs.length);
+		copy[index] = uv;
+		return copy;
 	}
 
 	private record DrawCall(

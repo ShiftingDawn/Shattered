@@ -42,10 +42,10 @@ final class TextureRegistryContentFactory implements RegistryContentFactory<Text
 	}
 
 	private static TextureAsset makeBordered(final Identifier registryKey, final JsonTextureData.Bordered data) {
-		final int top = data.borderTop != null ? data.borderTop : -1;
-		final int bottom = data.borderBottom != null ? data.borderBottom : -1;
-		final int left = data.borderLeft != null ? data.borderLeft : -1;
-		final int right = data.borderRight != null ? data.borderRight : -1;
+		final int top = data.borderTop != null ? data.borderTop : data.borderSize;
+		final int bottom = data.borderBottom != null ? data.borderBottom : data.borderSize;
+		final int left = data.borderLeft != null ? data.borderLeft : data.borderSize;
+		final int right = data.borderRight != null ? data.borderRight : data.borderSize;
 		return new TextureAsset.Bordered(registryKey, top, bottom, left, right);
 	}
 

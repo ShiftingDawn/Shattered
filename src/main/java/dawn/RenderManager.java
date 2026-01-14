@@ -39,6 +39,7 @@ public final class RenderManager {
 		GlStateManager.blendSimple();
 		this.tessellator.start().set(Textures.ARGON).pos(0, 0, Display.getWidth(), Display.getHeight() / 2).draw().end();
 		this.fontRenderer.start().set("Dit is een font test", Color.GREEN).pos(100, 100).write().end();
+		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, Display.getWidth() - 200, Display.getHeight() - 200).draw().end();
 	}
 
 	private void resetShader() {

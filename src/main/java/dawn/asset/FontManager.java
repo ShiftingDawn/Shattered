@@ -107,7 +107,7 @@ public final class FontManager {
 		}
 		FontManager.LOGGER.debug("\t\tGenerating data");
 		writer.data.position(0);
-		final Texture fontTexture = TextureManager.makeTextureFromData(writer.data, false);
+		final Texture fontTexture = TextureManager.makeTextureFromData(new TextureAsset.Default(font.getRegistryKey()), writer.data, false);
 		FontManager.LOGGER.debug("\t\tCleaning up");
 		writer.free();
 		charData.free();
