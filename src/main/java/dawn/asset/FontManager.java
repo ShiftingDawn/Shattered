@@ -14,8 +14,6 @@ import it.unimi.dsi.fastutil.chars.Char2ObjectMaps;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.NullUnmarked;
-import org.lwjgl.stb.STBIWriteCallback;
 import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.system.MemoryStack;
@@ -26,7 +24,6 @@ import static org.lwjgl.stb.STBTruetype.stbtt_BakeFontBitmap;
 import static org.lwjgl.stb.STBTruetype.stbtt_GetFontVMetrics;
 import static org.lwjgl.stb.STBTruetype.stbtt_InitFont;
 import static org.lwjgl.system.MemoryUtil.memAlloc;
-import static org.lwjgl.system.MemoryUtil.memCopy;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -93,7 +90,7 @@ public final class FontManager {
 		FontManager.LOGGER.debug("\t\tSerializing bitmap");
 		final InMemoryPngWriter writer = new InMemoryPngWriter();
 		stbi_write_png_to_func(writer, Display.getWindow(), bakeResult.width, bakeResult.height, 4, imageData, bakeResult.width * 4);
-		this.assets.dumpAsset("font/%s.png".formatted(font.getRegistryKey().toPathSafeString()), writer.data);
+		this.assets.dumpAsset("font/%s.png".formatted(font.getRegistryKey().toPathSafeString()), writer.getData());
 		FontManager.LOGGER.debug("\t\tCalculating glyph data");
 		final Char2ObjectArrayMap<Font.Glyph> glyphs = new Char2ObjectArrayMap<>();
 		for (int i = 0; i < charData.capacity(); ++i) {
@@ -106,8 +103,8 @@ public final class FontManager {
 			glyphs.put((char) (i + 32), glyph);
 		}
 		FontManager.LOGGER.debug("\t\tGenerating data");
-		writer.data.position(0);
-		final Texture fontTexture = TextureManager.makeTextureFromData(new TextureAsset.Default(font.getRegistryKey()), writer.data, false);
+		writer.getData().position(0);
+		final Texture fontTexture = TextureManager.makeTextureFromData(new TextureAsset.Default(font.getRegistryKey()), writer.getData(), false);
 		FontManager.LOGGER.debug("\t\tCleaning up");
 		writer.free();
 		charData.free();
@@ -149,24 +146,4 @@ public final class FontManager {
 	}
 
 	private record BakeResult(ByteBuffer buffer, int width, int height) {}
-
-	@NullUnmarked
-	private static class InMemoryPngWriter extends STBIWriteCallback {
-
-		public ByteBuffer data;
-		public int size;
-
-		@Override
-		public void invoke(final long context, final long data, final int size) {
-			this.data = memAlloc(size);
-			memCopy(STBIWriteCallback.getData(data, size), this.data);
-			this.size = size;
-		}
-
-		@Override
-		public void free() {
-			memFree(this.data);
-			super.free();
-		}
-	}
 }

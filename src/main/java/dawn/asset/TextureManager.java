@@ -2,11 +2,18 @@ package dawn.asset;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import dawn.Dawn;
+import dawn.gfx.Display;
 import dawn.lib.ExitException;
+import dawn.lib.Tuple;
 import dawn.lib.Util;
 import dawn.registry.Identifier;
 import dawn.registry.Registries;
@@ -14,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_REPEAT;
@@ -38,39 +46,46 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public final class TextureManager {
 
+	public static final Identifier ATLAS = Identifier.of("atlas");
+	public static final Identifier MISSING = Identifier.of("missing");
 	private static final Logger LOGGER = Dawn.getLogger("Textures");
-	private final ConcurrentHashMap<Identifier, Texture> mapping = new ConcurrentHashMap<>();
-	private final TextureAsset missingTextureAsset = new TextureAsset.Default(Identifier.of("missing"));
+	private final List<TextureAsset> loadedTextures = new CopyOnWriteArrayList<>();
+	private final ConcurrentHashMap<Identifier, Texture> textures = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Identifier, TextureAtlas> atlasses = new ConcurrentHashMap<>();
 	private final AssetManager assets;
 
 	void init() {
 		TextureManager.LOGGER.info("Reloading textures");
+		this.atlasses.clear();
+		for (final Identifier texture : this.textures.keySet()) {
+			this.unloadTexture(texture);
+		}
+		this.loadedTextures.clear();
 		this.loadMissingTexture();
 		for (final TextureAsset texture : Registries.TEXTURES) {
-			this.unloadTexture(texture);
 			this.loadTexture(texture);
 		}
+		this.stitch();
 	}
 
 	private void loadTexture(final TextureAsset texture) {
 		TextureManager.LOGGER.debug("\tLoading texture {}", texture.getRegistryKey());
-		if (this.mapping.containsKey(texture.getRegistryKey())) {
-			TextureManager.LOGGER.error("\tTrying to load duplicate texture {}. This will most likely result in a memory leak.", texture.getRegistryKey());
+		if (this.loadedTextures.contains(texture)) {
+			TextureManager.LOGGER.error("\tTrying to load duplicate texture {}, skipping.", texture.getRegistryKey());
+			return;
 		}
 		try {
 			TextureManager.LOGGER.debug("\t\tReading texture file");
 			final String path = this.assets.getResources().makePath(texture.getRegistryKey(), "texture", "png");
-			final ByteBuffer buffer = this.assets.getResources().getBuffer(path);
-			if (buffer == null) {
+			final URL url = this.assets.getResources().getResource(path);
+			if (url == null) {
 				throw new FileNotFoundException("Texture file does not exist. Expected path: " + path);
 			}
-			final Texture result = TextureManager.makeTextureFromData(texture, buffer, true);
-			this.mapping.put(texture.getRegistryKey(), result);
+			this.loadedTextures.add(texture);
 			TextureManager.LOGGER.debug("\t\tDone");
 		} catch (final IOException e) {
 			TextureManager.LOGGER.error("Could not load texture {}. Using missing texture instead.", texture.getRegistryKey());
 			TextureManager.LOGGER.error(e);
-			this.mapping.put(texture.getRegistryKey(), this.mapping.get(this.missingTextureAsset.getRegistryKey()));
 		}
 	}
 
@@ -99,22 +114,99 @@ public final class TextureManager {
 			final int textureId = TextureManager.makeTextureId();
 			glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, image);
 			stbi_image_free(image);
-			return new Texture(assetData, textureId, width, height);
+			return new AbsoluteTexture(assetData, textureId, width, height, new int[] { 0, 0, width, height });
 		}
 	}
 
-	private void unloadTexture(final TextureAsset texture) {
-		final Texture tex = this.mapping.get(texture.getRegistryKey());
+	private record StitchEntry(ByteBuffer data, int w, int h) {
+	}
+
+	private void stitch() {
+		final Map<Identifier, Tuple<TextureAsset, StitchEntry>> entries = new HashMap<>();
+		for (final TextureAsset texture : this.loadedTextures) {
+			try {
+				final String path = this.assets.getResources().makePath(texture.getRegistryKey(), "texture", "png");
+				final ByteBuffer buffer = this.assets.getResources().getBuffer(path);
+				if (buffer == null) {
+					continue;
+				}
+				try (MemoryStack stack = stackPush()) {
+					final IntBuffer widthPtr = stack.mallocInt(1);
+					final IntBuffer heightPtr = stack.mallocInt(1);
+					final IntBuffer channelPtr = stack.mallocInt(1);
+					final ByteBuffer image = stbi_load_from_memory(buffer, widthPtr, heightPtr, channelPtr, 4);
+					assert image != null;
+					entries.put(texture.getRegistryKey(), new Tuple<>(texture, new StitchEntry(image, widthPtr.get(), heightPtr.get())));
+				}
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		final List<Identifier> sorted = entries.entrySet().stream()
+			.sorted((a, b) -> Long.compare((long) b.getValue().b().w() * b.getValue().b().h(), (long) a.getValue().b().w() * a.getValue().b().h()))
+			.map(Map.Entry::getKey)
+			.toList();
+		int atlasWidth = 256;
+		int atlasHeight = 256;
+		TextureManager.LOGGER.debug("Stitching atlas with size {}x{}", atlasWidth, atlasHeight);
+		while (true) {
+			try (ImagePacker packer = new ImagePacker(atlasWidth, atlasHeight)) {
+				for (final Identifier texture : sorted) {
+					final Tuple<TextureAsset, StitchEntry> entry = entries.get(texture);
+					if (entry != null) {
+						packer.addImage(texture, entry.b().data, entry.b().w, entry.b().h);
+					}
+				}
+				final InMemoryPngWriter writer = new InMemoryPngWriter();
+				STBImageWrite.stbi_write_png_to_func(writer, Display.getWindow(), packer.getAtlasWidth(), packer.getAtlasHeight(), 4, packer.getBuffer(), packer.getAtlasWidth() * 4);
+				this.assets.dumpAsset("atlas/%s.png".formatted(TextureManager.ATLAS.toPathSafeString()), writer.getData());
+				writer.getData().position(0);
+				final Texture texture = TextureManager.makeTextureFromData(new TextureAsset.Default(TextureManager.ATLAS), writer.getData(), true);
+				final TextureAtlas atlas = new TextureAtlas(texture, packer.getElements(), Util.make(new HashMap<>(), map -> {
+					entries.forEach((k, v) -> map.put(k, v.a()));
+				}));
+				this.textures.put(TextureManager.ATLAS, atlas);
+				this.atlasses.put(TextureManager.ATLAS, atlas);
+				entries.keySet().forEach(textureEntry -> this.textures.put(textureEntry, atlas));
+				writer.free();
+				break;
+			} catch (final RuntimeException e) {
+				if (!"ATLAS_TOO_SMALL".equals(e.getMessage())) {
+					throw e;
+				}
+			}
+			if (atlasWidth == atlasHeight) {
+				atlasWidth *= 2;
+			} else {
+				atlasHeight *= 2;
+			}
+			TextureManager.LOGGER.debug("Atlas too small, trying {}x{}", atlasWidth, atlasHeight);
+		}
+		for (final Tuple<TextureAsset, StitchEntry> entry : entries.values()) {
+			stbi_image_free(entry.b().data());
+		}
+	}
+
+	private void unloadTexture(final Identifier texture) {
+		final Texture tex = this.textures.get(texture);
 		if (tex != null) {
-			TextureManager.LOGGER.debug("\tUnloading texture {} ({})", texture.getRegistryKey(), tex.id());
+			TextureManager.LOGGER.debug("\tUnloading texture {} ({})", texture, tex.id());
 			glDeleteTextures(tex.id());
-			this.mapping.remove(texture.getRegistryKey());
+			this.textures.remove(texture);
 			TextureManager.LOGGER.debug("\t\tDone");
 		}
 	}
 
 	public Texture getTexture(final Identifier texture) {
-		return this.mapping.computeIfAbsent(texture, _ -> this.mapping.get(this.missingTextureAsset.getRegistryKey()));
+		Texture result = this.textures.get(texture);
+		if (result instanceof final TextureAtlas atlas && !atlas.asset().getRegistryKey().equals(texture)) {
+			result = atlas.getTexture(texture);
+		}
+		if (result == null) {
+			result = this.textures.get(TextureManager.MISSING);
+			this.textures.put(texture, result);
+		}
+		return result;
 	}
 
 	public Texture getTexture(final TextureAsset texture) {
@@ -132,17 +224,17 @@ public final class TextureManager {
 	}
 
 	private void loadMissingTexture() {
-		this.unloadTexture(this.missingTextureAsset);
+		this.unloadTexture(TextureManager.MISSING);
 		TextureManager.LOGGER.debug("\tGenerating missing texture");
-		if (this.mapping.containsKey(this.missingTextureAsset.getRegistryKey())) {
+		if (this.textures.containsKey(TextureManager.MISSING)) {
 			TextureManager.LOGGER.error("\tTrying to load duplicate missing texture. This will most likely result in a memory leak.");
 		}
 		final byte[] data = TextureManager.generateMissingTextureData();
 		final ByteBuffer buffer = BufferUtils.createByteBuffer(data.length);
 		buffer.put(data);
 		buffer.flip();
-		final Texture result = TextureManager.makeTextureFromData(this.missingTextureAsset, buffer, true);
-		this.mapping.put(this.missingTextureAsset.getRegistryKey(), result);
+		final Texture result = TextureManager.makeTextureFromData(new TextureAsset.Default(TextureManager.MISSING), buffer, true);
+		this.textures.put(TextureManager.MISSING, result);
 		TextureManager.LOGGER.debug("\t\tDone");
 	}
 

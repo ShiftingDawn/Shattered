@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import dawn.Dawn;
+import dawn.asset.AtlasTexture;
 import dawn.asset.ShaderAsset;
 import dawn.asset.Texture;
 import dawn.asset.TextureAsset;
@@ -296,23 +297,31 @@ public final class Tessellator {
 	}
 
 	private static float[] normalizeUV(final Texture texture, final float[] uvs) {
-		return new float[] {
-			Tessellator.normalizeUV(texture, uvs[0], true),
-			Tessellator.normalizeUV(texture, uvs[1], false),
-			Tessellator.normalizeUV(texture, uvs[2], true),
-			Tessellator.normalizeUV(texture, uvs[3], false),
-		};
+		if (texture instanceof final AtlasTexture atlasTexture) {
+			final float[] newUvs = new float[4];
+			System.arraycopy(uvs, 0, newUvs, 0, 4);
+			newUvs[0] += atlasTexture.u0();
+			newUvs[1] += atlasTexture.v0();
+			newUvs[2] += atlasTexture.u0();
+			newUvs[3] += atlasTexture.v0();
+			return new float[] {
+				Tessellator.normalizeUV(texture, newUvs[0], true),
+				Tessellator.normalizeUV(texture, newUvs[1], false),
+				Tessellator.normalizeUV(texture, newUvs[2], true),
+				Tessellator.normalizeUV(texture, newUvs[3], false),
+			};
+		} else {
+			return new float[] {
+				Tessellator.normalizeUV(texture, uvs[0], true),
+				Tessellator.normalizeUV(texture, uvs[1], false),
+				Tessellator.normalizeUV(texture, uvs[2], true),
+				Tessellator.normalizeUV(texture, uvs[3], false),
+			};
+		}
 	}
 
 	private static float normalizeUV(final Texture texture, final float uv, final boolean x) {
-		return uv / (float) (x ? texture.width() : texture.height());
-	}
-
-	private static float[] replaceUV(final float[] uvs, final float uv, final int index) {
-		final float[] copy = new float[uvs.length];
-		System.arraycopy(uvs, 0, copy, 0, uvs.length);
-		copy[index] = uv;
-		return copy;
+		return uv / (float) (x ? texture.imageWidth() : texture.imageHeight());
 	}
 
 	private record DrawCall(
