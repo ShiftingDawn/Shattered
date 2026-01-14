@@ -37,7 +37,7 @@ public final class RenderManager {
 		//TODO render gui
 		this.tessellator.start()
 			.set(Textures.ARGON).pos(0, 0, Display.getWidth(), Display.getHeight()).draw()
-			.set(Textures.LOGO).pos(Display.getWidth() / 2 - 85, 30, 170, 21).draw()
+			.set(Textures.LOGO).pos(0, 20).centerX(Display.getWidth()).draw()
 			.end();
 		this.fontRenderer.start().set("Dit is een font test", Color.GREEN).pos(100, 100).write().end();
 		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, 200, 200).draw().end();

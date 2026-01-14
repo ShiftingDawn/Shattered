@@ -150,6 +150,18 @@ public final class Tessellator {
 		return this.size(size.getWidth(), size.getHeight());
 	}
 
+	public Tessellator centerX(final int maxWidth) {
+		this.testDrawing();
+		this.bounds[0] += (maxWidth - this.bounds[2]) / 2;
+		return this;
+	}
+
+	public Tessellator centerY(final int maxHeight) {
+		this.testDrawing();
+		this.bounds[1] += (maxHeight - this.bounds[3]) / 2;
+		return this;
+	}
+
 	public Tessellator uv(final int uMin, final int vMin, final int uMax, final int vMax) {
 		this.uv[0] = (float) uMin;
 		this.uv[1] = (float) vMin;
