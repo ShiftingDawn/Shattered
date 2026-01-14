@@ -7,6 +7,7 @@ import dawn.asset.ShaderAsset;
 import dawn.init.Fonts;
 import dawn.lib.Color;
 import dawn.registry.Identifier;
+import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.jspecify.annotations.Nullable;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLE_STRIP;
@@ -97,9 +98,10 @@ public final class FontRenderer {
 		final float penY = call.y();
 		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, call.txt().length() * 6, GL_TRIANGLE_STRIP, () -> {
 			shader.bind();
+			GlStateManager.blendSimple();
 			GlStateManager.bindTexture(call.font().texture().id());
 			ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, data.getPropEnableTexture()), GL_TRUE);
-			ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, MatrixUtils.identity());
+			ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, new Matrix4f());
 		});
 		for (int i = 0; i < call.txt().length(); ++i) {
 			final char c = call.txt().charAt(i);

@@ -1,7 +1,6 @@
 package dawn.gfx;
 
 import dawn.Dawn;
-import dawn.event.EventBus;
 import org.jspecify.annotations.NullUnmarked;
 import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
@@ -25,43 +24,57 @@ final class Callbacks {
 	private static GLFWFramebufferSizeCallback framebufferSizeCallback;
 	private static GLFWWindowCloseCallback windowCloseCallback;
 
-	public static void init(long window) {
-		keyCallback = glfwSetKeyCallback(window, Callbacks::keyCallback);
-		charCallback = glfwSetCharCallback(window, Callbacks::charCallback);
-		mouseButtonCallback = glfwSetMouseButtonCallback(window, Callbacks::mouseButtonCallback);
-		framebufferSizeCallback = glfwSetFramebufferSizeCallback(window, Callbacks::framebufferSizeCallback);
-		windowCloseCallback = glfwSetWindowCloseCallback(window, Callbacks::windowCloseCallback);
+	public static void init(final long window) {
+		Callbacks.keyCallback = glfwSetKeyCallback(window, Callbacks::keyCallback);
+		Callbacks.charCallback = glfwSetCharCallback(window, Callbacks::charCallback);
+		Callbacks.mouseButtonCallback = glfwSetMouseButtonCallback(window, Callbacks::mouseButtonCallback);
+		Callbacks.framebufferSizeCallback = glfwSetFramebufferSizeCallback(window, Callbacks::framebufferSizeCallback);
+		Callbacks.windowCloseCallback = glfwSetWindowCloseCallback(window, Callbacks::windowCloseCallback);
 	}
 
 	public static void destroy() {
-		if (keyCallback != null) keyCallback.free();
-		if (charCallback != null) charCallback.free();
-		if (mouseButtonCallback != null) mouseButtonCallback.free();
-		if (framebufferSizeCallback != null) framebufferSizeCallback.free();
-		if (windowCloseCallback != null) windowCloseCallback.free();
+		if (Callbacks.keyCallback != null) {
+			Callbacks.keyCallback.free();
+		}
+		if (Callbacks.charCallback != null) {
+			Callbacks.charCallback.free();
+		}
+		if (Callbacks.mouseButtonCallback != null) {
+			Callbacks.mouseButtonCallback.free();
+		}
+		if (Callbacks.framebufferSizeCallback != null) {
+			Callbacks.framebufferSizeCallback.free();
+		}
+		if (Callbacks.windowCloseCallback != null) {
+			Callbacks.windowCloseCallback.free();
+		}
 	}
 
-	private static void keyCallback(long window, int key, int scancode, int action, int mods) {
+	private static void keyCallback(final long window, final int key, final int scancode, final int action, final int mods) {
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 			Dawn.getDawn().stop();
 		}
 	}
 
-	private static void charCallback(long window, int codepoint) {
+	private static void charCallback(final long window, final int codepoint) {
 	}
 
-	private static void mouseButtonCallback(long window1, int button, int action, int mods) {
+	private static void mouseButtonCallback(final long window1, final int button, final int action, final int mods) {
 	}
 
-	private static void framebufferSizeCallback(long window, int width, int height) {
-		int oldWidth = Display.getWidth();
-		int oldHeight = Display.getHeight();
-		Display.setWidth(width);
-		Display.setHeight(height);
-		EventBus.post(new DisplayResizedEvent(window, oldWidth, oldHeight, width, height));
+	private static void framebufferSizeCallback(final long window, final int width, final int height) {
+		final int oldWidth = Display.getPhysicalWidth();
+		final int oldHeight = Display.getPhysicalHeight();
+		if (width == 0 || height == 0) {
+			return;
+		}
+		Display.setPhysicalSize(width, height);
+		if (Display.getPhysicalWidth() != oldWidth || Display.getPhysicalHeight() != oldHeight) {
+			Display.onPhysicalSizeChanged();
+		}
 	}
 
-	private static void windowCloseCallback(long window) {
+	private static void windowCloseCallback(final long window) {
 		Dawn.getDawn().stop();
 	}
 

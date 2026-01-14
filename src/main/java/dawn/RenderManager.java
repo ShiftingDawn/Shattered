@@ -5,8 +5,6 @@ import dawn.event.EventBus;
 import dawn.gfx.Display;
 import dawn.gfx.DisplayResizedEvent;
 import dawn.gfx.FontRenderer;
-import dawn.gfx.GlStateManager;
-import dawn.gfx.MatrixUtils;
 import dawn.gfx.Shader;
 import dawn.gfx.ShaderProps;
 import dawn.gfx.Tessellator;
@@ -14,6 +12,7 @@ import dawn.init.Textures;
 import dawn.lib.Color;
 import dawn.registry.Identifier;
 import lombok.Getter;
+import org.joml.Matrix4f;
 import static org.lwjgl.opengl.GL11.glViewport;
 
 public final class RenderManager {
@@ -36,15 +35,19 @@ public final class RenderManager {
 
 	void render() {
 		//TODO render gui
-		GlStateManager.blendSimple();
-		this.tessellator.start().set(Textures.ARGON).pos(0, 0, Display.getWidth(), Display.getHeight() / 2).draw().end();
+		this.tessellator.start()
+			.set(Textures.ARGON).pos(0, 0, Display.getWidth(), Display.getHeight()).draw()
+			.set(Textures.LOGO).pos(Display.getWidth() / 2 - 85, 30, 170, 21).draw()
+			.end();
 		this.fontRenderer.start().set("Dit is een font test", Color.GREEN).pos(100, 100).write().end();
-		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, Display.getWidth() - 200, Display.getHeight() - 200).draw().end();
+		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, 200, 200).draw().end();
 	}
 
 	private void resetShader() {
-		glViewport(0, 0, Display.getWidth(), Display.getHeight());
-		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixProjection()), false, MatrixUtils.ortho());
-		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixModelView()), false, MatrixUtils.identity());
+		glViewport(0, 0, Display.getPhysicalWidth(), Display.getPhysicalHeight());
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixProjection()), false,
+			new Matrix4f().ortho(0, Display.getWidth(), Display.getHeight(), 0, 1, -1));
+		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixModelView()), false,
+			new Matrix4f());
 	}
 }

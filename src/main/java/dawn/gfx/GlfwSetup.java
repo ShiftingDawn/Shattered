@@ -1,10 +1,8 @@
 package dawn.gfx;
 
-import java.nio.IntBuffer;
 import dawn.Dawn;
 import dawn.lib.ExitException;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
@@ -37,17 +35,14 @@ import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
-import static org.lwjgl.glfw.GLFW.nglfwGetFramebufferSize;
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.system.MemoryUtil.memAddress;
 
 public final class GlfwSetup {
 
 	public static final Logger LOGGER = Dawn.getLogger("Display");
 
 	public static void init(final int displayWidth, final int displayHeight) {
-		Display.setWidth(displayWidth);
-		Display.setHeight(displayHeight);
+		Display.setPhysicalSize(displayWidth, displayHeight);
 		if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
 			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 		}
@@ -72,7 +67,7 @@ public final class GlfwSetup {
 		glfwWindowHint(GLFW_GREEN_BITS, monitorMode.greenBits());
 		glfwWindowHint(GLFW_BLUE_BITS, monitorMode.blueBits());
 
-		final long window = glfwCreateWindow(Display.getWidth(), Display.getHeight(), Dawn.NAME, NULL, NULL);
+		final long window = glfwCreateWindow(Display.getPhysicalWidth(), Display.getPhysicalHeight(), Dawn.NAME, NULL, NULL);
 		if (window == NULL) {
 			GlfwSetup.LOGGER.fatal("Could not create window");
 			throw new ExitException();
@@ -81,14 +76,11 @@ public final class GlfwSetup {
 		Callbacks.init(window);
 
 		glfwShowWindow(window);
-		final IntBuffer framebufferSize = BufferUtils.createIntBuffer(2);
-		nglfwGetFramebufferSize(window, memAddress(framebufferSize), memAddress(framebufferSize) + 4);
-		Display.setWidth(framebufferSize.get(0));
-		Display.setHeight(framebufferSize.get(1));
 		Display.setWindow(window);
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 		GL.createCapabilities();
+		Display.onPhysicalSizeChanged();
 	}
 
 	public static void destroy() {
