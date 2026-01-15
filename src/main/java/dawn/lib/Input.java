@@ -1,10 +1,11 @@
 package dawn.lib;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import dawn.Dawn;
-import dawn.gfx.Display;
+import dawn.gfx.Window;
 import it.unimi.dsi.fastutil.chars.CharArrayFIFOQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueues;
@@ -31,8 +32,8 @@ public final class Input {
 	private static final int MAX_KEYS = GLFW_KEY_LAST + 1;
 	private static final Int2ObjectMap<String> KEY_NAMES = new Int2ObjectArrayMap<>();
 	private static final ThreadLocal<@Nullable Input> INSTANCE = new ThreadLocal<>();
-	private final Dawn dawn;
 	private final double[] mouseButtonPositions = new double[Input.MAX_MOUSE_BUTTONS * 2 * 2];
+	private final Window window;
 	private int buttonStates = 0;
 	private double mouseX = 0;
 	private double mouseY = 0;
@@ -41,14 +42,19 @@ public final class Input {
 	private final BitSet keyRepeat = new BitSet(Input.MAX_KEYS);
 	private final int[] keyMods = new int[Input.MAX_KEYS];
 	private final CharPriorityQueue charQueue = CharPriorityQueues.synchronize(new CharArrayFIFOQueue());
+	private final List<MouseEventListener> mouseListeners = new CopyOnWriteArrayList<>();
 
-	public Input(final Dawn dawn) {
-		this.dawn = dawn;
+	public Input(final Window window) {
+		this.window = window;
 		Input.INSTANCE.set(this);
 	}
 
 	public static String getKeyName(final int keyCode) {
 		return Input.KEY_NAMES.computeIfAbsent(keyCode, _ -> Objects.requireNonNullElseGet(GLFW.glfwGetKeyName(keyCode, -1), () -> Input.KEY_NAMES.get(GLFW.GLFW_KEY_UNKNOWN)));
+	}
+
+	public void addMouseListener(final MouseEventListener listener) {
+		this.mouseListeners.add(listener);
 	}
 
 	public void handleMousePos(final double x, final double y) {
@@ -61,7 +67,8 @@ public final class Input {
 			final int mask = 1 << button;
 			int currentState = this.buttonStates & 0xFF;
 			final boolean pressed = (currentState & mask) != 0;
-			if (!allowDuplicateEvents && pressed == (action == GLFW_PRESS)) {
+			final boolean newPressed = action == GLFW_PRESS;
+			if (!allowDuplicateEvents && pressed == (newPressed)) {
 				return;
 			}
 			this.buttonStates = (this.buttonStates & 0x00FF) | (currentState << 8);
@@ -69,7 +76,7 @@ public final class Input {
 			final int prevIndex = (button + Input.MAX_MOUSE_BUTTONS) << 1;
 			this.mouseButtonPositions[prevIndex] = this.mouseButtonPositions[currentIndex];
 			this.mouseButtonPositions[prevIndex + 1] = this.mouseButtonPositions[currentIndex + 1];
-			if (action == GLFW_PRESS) {
+			if (newPressed) {
 				currentState |= mask;
 			} else {
 				currentState &= ~mask;
@@ -80,8 +87,16 @@ public final class Input {
 			this.mouseButtonPositions[currentIndex] = mx;
 			this.mouseButtonPositions[currentIndex + 1] = my;
 			if (this.isClicked(button, false)) {
-				this.dawn.getGuiManager().handleMouseEvent(button, -1, mx, my);
+				this.dispatchMouseEvent(button, MouseEventType.CLICK, mx, my);
+			} else {
+				this.dispatchMouseEvent(button, newPressed ? MouseEventType.PRESS : MouseEventType.RELEASE, mx, my);
 			}
+		}
+	}
+
+	private void dispatchMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
+		for (final MouseEventListener listener : this.mouseListeners) {
+			listener.onMouseEvent(button, eventType, mouseX, mouseY);
 		}
 	}
 
@@ -118,11 +133,11 @@ public final class Input {
 	}
 
 	public double getMouseX() {
-		return this.mouseX * Display.getWidth() / Display.getWindowWidth();
+		return this.mouseX * this.window.getWidth() / this.window.getWindowWidth();
 	}
 
 	public double getMouseY() {
-		return this.mouseY * Display.getHeight() / Display.getWindowHeight();
+		return this.mouseY * this.window.getHeight() / this.window.getWindowHeight();
 	}
 
 	public boolean isClicked(final int button, final boolean consume) {

@@ -5,17 +5,26 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import dawn.event.EventBus;
-import dawn.gfx.DisplayResizedEvent;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
-import org.lwjgl.glfw.GLFW;
+import dawn.gfx.Window;
+import dawn.gfx.WindowResizedEvent;
+import dawn.lib.MouseEventType;
+import lombok.Getter;
 
 public final class GuiManager {
 
 	private final List<GuiScreen> screens = new ArrayList<>();
+	private final @Getter Window window;
 
-	public GuiManager() {
-		EventBus.register(DisplayResizedEvent.class, _ -> this.reload());
+	public GuiManager(final Window window) {
+		this.window = window;
+		window.getInput().addMouseListener(this::handleMouseEvent);
+		EventBus.register(WindowResizedEvent.class, e -> {
+			if (e.getPointer() == window.getPointer()) {
+				this.reload();
+			}
+		});
 	}
 
 	public void openScreen(final GuiScreen screen) {
@@ -25,6 +34,7 @@ public final class GuiManager {
 			this.screens.addLast(screen);
 			return;
 		}
+		screen.setGuiManager(this);
 		this.screens.addLast(screen);
 		screen.init();
 	}
@@ -64,16 +74,16 @@ public final class GuiManager {
 		});
 	}
 
-	public void handleMouseEvent(final int button, final int action, final double mouseX, final double mouseY) {
+	private void handleMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
 		final int mx = (int) mouseX;
 		final int my = (int) mouseY;
 		this.walkStack(true, screen -> {
 			if (screen.contains(mx, my)) {
-				if (this.processMouseEvent(screen, button, action, mx, my)) {
+				if (this.processMouseEvent(screen, button, eventType, mx, my)) {
 					return true;
 				}
 				for (final GuiWidget widget : screen.getWidgets()) {
-					if (widget.contains(mx, my) && this.processMouseEvent(widget, button, action, mx, my)) {
+					if (widget.contains(mx, my) && this.processMouseEvent(widget, button, eventType, mx, my)) {
 						return true;
 					}
 				}
@@ -83,12 +93,11 @@ public final class GuiManager {
 
 	}
 
-	private boolean processMouseEvent(final GuiBase receiver, final int button, final int action, final int mouseX, final int mouseY) {
-		return switch (action) {
-			case -1 -> receiver.onMouseClicked(button, mouseX, mouseY);
-			case GLFW.GLFW_PRESS -> receiver.onMousePressed(button, mouseX, mouseY);
-			case GLFW.GLFW_RELEASE -> receiver.onMouseReleased(button, mouseX, mouseY);
-			default -> throw new IllegalArgumentException("Invalid action type: " + action);
+	private boolean processMouseEvent(final GuiBase receiver, final int button, final MouseEventType eventType, final int mouseX, final int mouseY) {
+		return switch (eventType) {
+			case RELEASE -> receiver.onMouseReleased(button, mouseX, mouseY);
+			case PRESS -> receiver.onMousePressed(button, mouseX, mouseY);
+			case CLICK -> receiver.onMouseClicked(button, mouseX, mouseY);
 		};
 	}
 

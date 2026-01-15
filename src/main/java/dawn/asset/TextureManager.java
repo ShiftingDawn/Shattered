@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import dawn.Dawn;
-import dawn.gfx.Display;
 import dawn.gfx.GlStateManager;
 import dawn.lib.ExitException;
 import dawn.lib.Tuple;
@@ -156,7 +155,8 @@ public final class TextureManager {
 					}
 				}
 				final InMemoryPngWriter writer = new InMemoryPngWriter();
-				STBImageWrite.stbi_write_png_to_func(writer, Display.getWindow(), packer.getAtlasWidth(), packer.getAtlasHeight(), 4, packer.getBuffer(), packer.getAtlasWidth() * 4);
+				//TODO check if context (window) is needed
+				STBImageWrite.stbi_write_png_to_func(writer, Dawn.getDawn().getWindow().getPointer(), packer.getAtlasWidth(), packer.getAtlasHeight(), 4, packer.getBuffer(), packer.getAtlasWidth() * 4);
 				this.assets.dumpAsset("atlas/%s.png".formatted(TextureManager.ATLAS.toPathSafeString()), writer.getData());
 				writer.getData().position(0);
 				final Texture texture = TextureManager.makeTextureFromData(new TextureAsset.Default(TextureManager.ATLAS), writer.getData(), true);

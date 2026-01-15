@@ -7,5 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @Getter
-public final class DisplayResizedEvent extends Event {
+public final class WindowResizedEvent extends Event {
+
+	private final long pointer;
 }

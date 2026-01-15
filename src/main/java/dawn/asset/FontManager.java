@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import dawn.Dawn;
-import dawn.gfx.Display;
 import dawn.registry.Identifier;
 import dawn.registry.Registries;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
@@ -96,7 +95,8 @@ public final class FontManager {
 		imageData.flip();
 		FontManager.LOGGER.debug("\t\tSerializing bitmap");
 		final InMemoryPngWriter writer = new InMemoryPngWriter();
-		stbi_write_png_to_func(writer, Display.getWindow(), bakeResult.width, bakeResult.height, 4, imageData, bakeResult.width * 4);
+		//TODO check if context (window) is needed
+		stbi_write_png_to_func(writer, Dawn.getDawn().getWindow().getPointer(), bakeResult.width, bakeResult.height, 4, imageData, bakeResult.width * 4);
 		this.assets.dumpAsset("font/%s.png".formatted(font.getRegistryKey().toPathSafeString()), writer.getData());
 		FontManager.LOGGER.debug("\t\tCalculating glyph data");
 		final Char2ObjectArrayMap<Font.Glyph> glyphs = new Char2ObjectArrayMap<>();

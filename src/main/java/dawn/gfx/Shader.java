@@ -3,6 +3,7 @@ package dawn.gfx;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import dawn.Dawn;
 import dawn.asset.ResourceResolver;
 import dawn.asset.ShaderAsset;
 import dawn.lib.ExitException;
@@ -45,7 +46,7 @@ public final class Shader {
 		glBindFragDataLocation(fragmentShader, 0, asset.getPropOutColor());
 		glLinkProgram(this.program);
 		if (glGetProgrami(this.program, GL_LINK_STATUS) != GL_TRUE) {
-			GlfwSetup.LOGGER.fatal("Could not link shader program");
+			Dawn.LOGGER.fatal("Could not link shader program");
 			throw new ExitException();
 		}
 		//Delete shaders
@@ -74,7 +75,7 @@ public final class Shader {
 			if (shaderSource == null) {
 				final InputStream stream = resources.getStream(shaderPath);
 				if (stream == null) {
-					GlfwSetup.LOGGER.fatal("Could not load shader file: {}", shaderPath);
+					Dawn.LOGGER.fatal("Could not load shader file: {}", shaderPath);
 					throw new FileNotFoundException();
 				}
 				shaderSource = new String(stream.readAllBytes());
@@ -86,7 +87,7 @@ public final class Shader {
 				throw new IOException();
 			}
 		} catch (final IOException e) {
-			GlfwSetup.LOGGER.fatal("Could not compile shader: {}", shaderPath);
+			Dawn.LOGGER.fatal("Could not compile shader: {}", shaderPath);
 			throw new ExitException();
 		}
 	}
