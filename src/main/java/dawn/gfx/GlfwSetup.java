@@ -3,6 +3,7 @@ package dawn.gfx;
 import java.nio.IntBuffer;
 import dawn.Dawn;
 import dawn.lib.ExitException;
+import dawn.lib.Input;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -44,7 +45,7 @@ public final class GlfwSetup {
 
 	public static final Logger LOGGER = Dawn.getLogger("Display");
 
-	public static void init(final int displayWidth, final int displayHeight) {
+	public static void init(final int displayWidth, final int displayHeight, final Input input) {
 		Display.setWindowSize(displayWidth, displayHeight);
 		if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
 			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
@@ -83,7 +84,7 @@ public final class GlfwSetup {
 			Display.setFrameBufferSize(widthPtr.get(), heightPtr.get());
 		}
 
-		Callbacks.init(window);
+		Callbacks.init(window, input);
 
 		glfwShowWindow(window);
 		glfwMakeContextCurrent(window);

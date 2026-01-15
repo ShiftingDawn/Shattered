@@ -8,6 +8,7 @@ import dawn.asset.ResourceResolver;
 import dawn.gfx.GlfwSetup;
 import dawn.lib.ArgHandler;
 import dawn.lib.ExitException;
+import dawn.lib.Input;
 import dawn.lib.Workspace;
 import dawn.registry.RegistrySetup;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public final class Dawn {
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private static @Getter Dawn dawn;
 	private final Runtime runtime = new Runtime();
+	private final @Getter Input input = new Input();
 	private final @Getter ArgHandler args;
 	private final @Getter Workspace workspace;
 	private final @Getter ResourceResolver resources;
@@ -45,7 +47,7 @@ public final class Dawn {
 	}
 
 	private void init() {
-		GlfwSetup.init(this.args.displayWidth, this.args.displayHeight);
+		GlfwSetup.init(this.args.displayWidth, this.args.displayHeight, this.input);
 		RegistrySetup.load(this.resources);
 		this.assets.init();
 		this.renderManager = new RenderManager(this, this.assets);

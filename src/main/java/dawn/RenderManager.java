@@ -40,7 +40,15 @@ public final class RenderManager {
 			.set(Textures.LOGO).pos(0, 20).centerX(Display.getWidth()).draw()
 			.end();
 		this.fontRenderer.start().set("Dit is een font test", Color.GREEN).pos(100, 100).write().end();
-		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, 200, 200).draw().end();
+		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, 50, 50).draw().end();
+		this.tessellator.start().set(Color.BLUE).pos(750, 550, 50, 50).draw().end();
+		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(750, 550, 50, 50).draw().end();
+		final double mx = this.dawn.getInput().getMouseX();
+		final double my = this.dawn.getInput().getMouseY();
+		this.tessellator.start().set(Color.RED).pos((int) mx - 3, (int) my - 3, 6, 6).draw().end();
+		if (this.dawn.getInput().isClicked(0)) {
+			System.out.println(true);
+		}
 	}
 
 	private void resetShader() {
