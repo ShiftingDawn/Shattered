@@ -82,7 +82,7 @@ public final class FontRenderer {
 	public FontRenderer write() {
 		this.testWriting();
 		if (this.txt != null) {
-			final WriteCall call = new WriteCall(this.txt, this.fontSize, this.position.x(), this.position.y(), this.fontGetter.apply(Fonts.ROOT), this.color);
+			final WriteCall call = new WriteCall(this.txt, this.fontSize, this.position.x(), this.position.y(), this.getFont(), this.color);
 			final Shader shader = this.dawn.getRenderManager().getShader();
 			FontRenderer.render(call, shader, shader.getAsset());
 		}
@@ -90,18 +90,24 @@ public final class FontRenderer {
 		return this;
 	}
 
+	private Font getFont() {
+		return this.fontGetter.apply(Fonts.ROOT);
+	}
+
 	private static void render(final WriteCall call, final Shader shader, final ShaderAsset data) {
 		if (!data.isCanTexture()) {
 			throw new IllegalStateException("The currently bound shader '%s' does not support rendering textures (needed for font)".formatted(data.getRegistryKey()));
 		}
+		final float scale = FontRenderer.getFontScale(call.font, call.size);
 		float penX = call.x();
-		final float penY = call.y();
+		final float penY = call.y() + FontRenderer.getStringHeight(call.font, call.size);
 		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, call.txt().length() * 6, GL_TRIANGLE_STRIP, () -> {
 			shader.bind();
 			GlStateManager.blendSimple();
 			GlStateManager.bindTexture(call.font().texture().id());
 			ShaderProps.setUniform1(ShaderProps.getNamedLocation(shader, data.getPropEnableTexture()), GL_TRUE);
 			ShaderProps.setUniform4(ShaderProps.getNamedLocation(shader, data.getPropMatrixTessellatorTransform()), false, new Matrix4f());
+			GlStateManager.textureFilterSmooth();
 		});
 		for (int i = 0; i < call.txt().length(); ++i) {
 			final char c = call.txt().charAt(i);
@@ -109,11 +115,10 @@ public final class FontRenderer {
 			if (glyph == null) {
 				continue;
 			}
-			final float scale = FontRenderer.getFontScale(call.font, call.size);
-			final float x0 = penX + (glyph.xOffset() / scale);
-			final float y0 = penY + (glyph.yOffset() / scale);
-			final float x1 = x0 + ((glyph.x1() - glyph.x0()) / scale);
-			final float y1 = y0 + ((glyph.y1() - glyph.y0()) / scale);
+			final float x0 = penX + (glyph.xOffset() * scale);
+			final float y0 = penY + (glyph.yOffset() * scale);
+			final float x1 = x0 + ((glyph.x1() - glyph.x0()) * scale);
+			final float y1 = y0 + ((glyph.y1() - glyph.y0()) * scale);
 			final float[] uvs = glyph.getNormalizedUvs(call.font());
 			if (i > 0) {
 				//Connect to previous char so we can write the whole string in 1 call
@@ -127,13 +132,21 @@ public final class FontRenderer {
 				//Connect to next char so we can write the whole string in 1 call
 				builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
 			}
-			penX += (glyph.advance() / scale);
+			penX += (glyph.advance() * scale);
 		}
 		builder.draw();
 	}
 
 	public void end() {
 		this.writing = false;
+	}
+
+	public int getStringWidth(final String str, final int fontSize) {
+		return FontRenderer.getStringWidth(this.getFont(), str, fontSize);
+	}
+
+	public int getStringHeight(final int fontSize) {
+		return FontRenderer.getStringHeight(this.getFont(), fontSize);
 	}
 
 	public static int getStringWidth(final Font font, final String str, final int fontSize) {
@@ -161,7 +174,9 @@ public final class FontRenderer {
 		if (fontSize < 0) {
 			return 1f;
 		}
-		return (float) font.builtInSize() / (float) fontSize;
+		final float s = (float) fontSize / (float) font.builtInSize();
+
+		return s;
 	}
 
 	private record WriteCall(String txt, int size, int x, int y, Font font, Color color) {

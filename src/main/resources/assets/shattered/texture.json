@@ -2,5 +2,6 @@
 	"shattered:argon",
 	"shattered:logo",
 	"shattered:gui/background",
-	"shattered:gui/button"
+	"shattered:gui/button",
+	"shattered:gui/button_pressed"
 ]

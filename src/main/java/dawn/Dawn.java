@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.util.Locale;
 import dawn.asset.AssetManager;
 import dawn.asset.ResourceResolver;
+import dawn.gfx.GlStateManager;
 import dawn.gfx.GlfwSetup;
+import dawn.gui.GuiManager;
+import dawn.gui.ScreenMainMenu;
 import dawn.lib.ArgHandler;
 import dawn.lib.ExitException;
 import dawn.lib.Input;
@@ -22,13 +25,14 @@ public final class Dawn {
 	public static final Logger LOGGER = Dawn.getLogger(Dawn.NAME);
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	private static @Getter Dawn dawn;
-	private final Runtime runtime = new Runtime();
-	private final @Getter Input input = new Input();
+	private final Runtime runtime = new Runtime(this);
+	private final @Getter Input input = new Input(this);
 	private final @Getter ArgHandler args;
 	private final @Getter Workspace workspace;
 	private final @Getter ResourceResolver resources;
 	private final @Getter AssetManager assets;
 	private @Getter RenderManager renderManager;
+	private @Getter GuiManager guiManager;
 
 	private Dawn(final File rootDir, final String[] args) {
 		Dawn.dawn = this;
@@ -51,6 +55,9 @@ public final class Dawn {
 		RegistrySetup.load(this.resources);
 		this.assets.init();
 		this.renderManager = new RenderManager(this, this.assets);
+		this.guiManager = new GuiManager();
+		this.guiManager.openScreen(new ScreenMainMenu());
+		GlStateManager.blendSimple();
 	}
 
 	public void stop() {

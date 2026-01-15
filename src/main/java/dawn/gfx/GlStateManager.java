@@ -1,13 +1,18 @@
 package dawn.gfx;
 
 import static org.lwjgl.opengl.GL11.GL_BLEND;
+import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glBlendFunc;
 import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 
 public final class GlStateManager {
@@ -54,6 +59,27 @@ public final class GlStateManager {
 
 	public static void blendNone() {
 		GlStateManager.blend(false, 0, 0);
+	}
+
+	public static void textureFilterMin(final int value) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, value);
+	}
+
+	public static void textureFilterMag(final int value) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, value);
+	}
+
+	public static void textureFilterAll(final int value) {
+		GlStateManager.textureFilterMin(value);
+		GlStateManager.textureFilterMag(value);
+	}
+
+	public static void textureFilterHard() {
+		GlStateManager.textureFilterAll(GL_NEAREST);
+	}
+
+	public static void textureFilterSmooth() {
+		GlStateManager.textureFilterAll(GL_LINEAR);
 	}
 
 	private GlStateManager() {

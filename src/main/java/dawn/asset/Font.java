@@ -3,7 +3,7 @@ package dawn.asset;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
 import org.jspecify.annotations.Nullable;
 
-public record Font(FontAsset asset, Texture texture, Char2ObjectMap<Glyph> glyphs, float lineHeight, int builtInSize) {
+public record Font(FontAsset asset, Texture texture, Char2ObjectMap<Glyph> glyphs, float lineHeight, float baseline, int builtInSize) {
 
 	public static int SIZE = 32;
 

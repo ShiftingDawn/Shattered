@@ -142,7 +142,7 @@ public final class ShaderProps {
 		glUniform3iv(location, data);
 	}
 
-	public static void setUniform2(final int location, final boolean transpose, final Matrix3f mat) {
+	public static void setUniform3(final int location, final boolean transpose, final Matrix3f mat) {
 		glUniformMatrix3fv(location, transpose, Util.make(BufferUtils.createFloatBuffer(9), mat::get));
 	}
 

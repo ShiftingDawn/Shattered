@@ -23,6 +23,7 @@ import static org.lwjgl.stb.STBImageWrite.stbi_write_png_to_func;
 import static org.lwjgl.stb.STBTruetype.stbtt_BakeFontBitmap;
 import static org.lwjgl.stb.STBTruetype.stbtt_GetFontVMetrics;
 import static org.lwjgl.stb.STBTruetype.stbtt_InitFont;
+import static org.lwjgl.stb.STBTruetype.stbtt_ScaleForMappingEmToPixels;
 import static org.lwjgl.system.MemoryUtil.memAlloc;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
@@ -66,6 +67,7 @@ public final class FontManager {
 		}
 		FontManager.LOGGER.debug("\t\tLoading metadata");
 		final float lineHeight;
+		final float baseline;
 		try (STBTTFontinfo fontInfo = STBTTFontinfo.create()) {
 			stbtt_InitFont(fontInfo, fileDataBuffer);
 			try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -73,7 +75,12 @@ public final class FontManager {
 				final IntBuffer descentPtr = stack.mallocInt(1);
 				final IntBuffer lineGapPtr = stack.mallocInt(1);
 				stbtt_GetFontVMetrics(fontInfo, ascentPtr, descentPtr, lineGapPtr);
-				lineHeight = ascentPtr.get() - descentPtr.get() + lineGapPtr.get();
+				final int ascent = ascentPtr.get(0);
+				final int descent = descentPtr.get(0);
+				final int lineGap = lineGapPtr.get(0);
+				final float scale = stbtt_ScaleForMappingEmToPixels(fontInfo, FontManager.FONT_HEIGHT);
+				lineHeight = scale * (ascent + descent + lineGap);
+				baseline = scale * ascent;
 			}
 		}
 		FontManager.LOGGER.debug("\t\tBaking bitmap");
@@ -110,7 +117,7 @@ public final class FontManager {
 		charData.free();
 		MemoryUtil.memFree(imageData);
 		MemoryUtil.memFree(bakeResult.buffer());
-		final Font result = new Font(font, fontTexture, Char2ObjectMaps.unmodifiable(glyphs), lineHeight, FontManager.FONT_HEIGHT);
+		final Font result = new Font(font, fontTexture, Char2ObjectMaps.unmodifiable(glyphs), lineHeight, baseline, FontManager.FONT_HEIGHT);
 		this.mapping.put(font.getRegistryKey(), result);
 		FontManager.LOGGER.debug("\t\tDone");
 	}

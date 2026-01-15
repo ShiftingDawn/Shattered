@@ -8,8 +8,6 @@ import dawn.gfx.FontRenderer;
 import dawn.gfx.Shader;
 import dawn.gfx.ShaderProps;
 import dawn.gfx.Tessellator;
-import dawn.init.Textures;
-import dawn.lib.Color;
 import dawn.registry.Identifier;
 import lombok.Getter;
 import org.joml.Matrix4f;
@@ -34,21 +32,9 @@ public final class RenderManager {
 	}
 
 	void render() {
-		//TODO render gui
-		this.tessellator.start()
-			.set(Textures.ARGON).pos(0, 0, Display.getWidth(), Display.getHeight()).draw()
-			.set(Textures.LOGO).pos(0, 20).centerX(Display.getWidth()).draw()
-			.end();
-		this.fontRenderer.start().set("Dit is een font test", Color.GREEN).pos(100, 100).write().end();
-		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(100, 100, 50, 50).draw().end();
-		this.tessellator.start().set(Color.BLUE).pos(750, 550, 50, 50).draw().end();
-		this.tessellator.start().set(Textures.GUI_BACKGROUND).pos(750, 550, 50, 50).draw().end();
-		final double mx = this.dawn.getInput().getMouseX();
-		final double my = this.dawn.getInput().getMouseY();
-		this.tessellator.start().set(Color.RED).pos((int) mx - 3, (int) my - 3, 6, 6).draw().end();
-		if (this.dawn.getInput().isClicked(0)) {
-			System.out.println(true);
-		}
+		final int mouseX = (int) this.dawn.getInput().getMouseX();
+		final int mouseY = (int) this.dawn.getInput().getMouseY();
+		this.dawn.getGuiManager().render(this.tessellator, this.fontRenderer, mouseX, mouseY);
 	}
 
 	private void resetShader() {

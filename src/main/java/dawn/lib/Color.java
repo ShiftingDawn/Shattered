@@ -77,16 +77,48 @@ public final class Color {
 		}
 
 		return new Color(Math.min((int) (r / Color.SHADE_FACTOR), 255),
-				Math.min((int) (g / Color.SHADE_FACTOR), 255),
-				Math.min((int) (b / Color.SHADE_FACTOR), 255),
-				a);
+			Math.min((int) (g / Color.SHADE_FACTOR), 255),
+			Math.min((int) (b / Color.SHADE_FACTOR), 255),
+			a);
 	}
 
 	public Color darker() {
 		return new Color(Math.max((int) (this.ints[0] * Color.SHADE_FACTOR), 0),
-				Math.max((int) (this.ints[1] * Color.SHADE_FACTOR), 0),
-				Math.max((int) (this.ints[2] * Color.SHADE_FACTOR), 0),
-				this.ints[3]);
+			Math.max((int) (this.ints[1] * Color.SHADE_FACTOR), 0),
+			Math.max((int) (this.ints[2] * Color.SHADE_FACTOR), 0),
+			this.ints[3]);
+	}
+
+	public Color withRed(final int red) {
+		return red == this.getRed() ? this : new Color(red, this.getGreen(), this.getBlue(), this.getAlpha());
+	}
+
+	public Color withGreen(final int green) {
+		return green == this.getGreen() ? this : new Color(this.getRed(), green, this.getBlue(), this.getAlpha());
+	}
+
+	public Color withBlue(final int blue) {
+		return blue == this.getBlue() ? this : new Color(this.getRed(), this.getGreen(), blue, this.getAlpha());
+	}
+
+	public Color withAlpha(final int alpha) {
+		return alpha == this.getAlpha() ? this : new Color(this.getRed(), this.getGreen(), this.getBlue(), alpha);
+	}
+
+	public Color withRed(final float red) {
+		return red == this.r() ? this : new Color(red, this.g(), this.b(), this.a());
+	}
+
+	public Color withGreen(final float green) {
+		return green == this.g() ? this : new Color(this.r(), green, this.b(), this.a());
+	}
+
+	public Color withBlue(final float blue) {
+		return blue == this.b() ? this : new Color(this.r(), this.g(), blue, this.a());
+	}
+
+	public Color withAlpha(final float alpha) {
+		return alpha == this.a() ? this : new Color(this.r(), this.g(), this.b(), alpha);
 	}
 
 	public float r() {

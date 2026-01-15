@@ -3,12 +3,14 @@ package dawn.lib;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import dawn.Dawn;
 import dawn.gfx.Display;
 import it.unimi.dsi.fastutil.chars.CharArrayFIFOQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueues;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LAST;
 import static org.lwjgl.glfw.GLFW.GLFW_MOD_ALT;
@@ -28,6 +30,8 @@ public final class Input {
 	private static final int MAX_MOUSE_BUTTONS = GLFW_MOUSE_BUTTON_LAST + 1;
 	private static final int MAX_KEYS = GLFW_KEY_LAST + 1;
 	private static final Int2ObjectMap<String> KEY_NAMES = new Int2ObjectArrayMap<>();
+	private static final ThreadLocal<@Nullable Input> INSTANCE = new ThreadLocal<>();
+	private final Dawn dawn;
 	private final double[] mouseButtonPositions = new double[Input.MAX_MOUSE_BUTTONS * 2 * 2];
 	private int buttonStates = 0;
 	private double mouseX = 0;
@@ -37,6 +41,11 @@ public final class Input {
 	private final BitSet keyRepeat = new BitSet(Input.MAX_KEYS);
 	private final int[] keyMods = new int[Input.MAX_KEYS];
 	private final CharPriorityQueue charQueue = CharPriorityQueues.synchronize(new CharArrayFIFOQueue());
+
+	public Input(final Dawn dawn) {
+		this.dawn = dawn;
+		Input.INSTANCE.set(this);
+	}
 
 	public static String getKeyName(final int keyCode) {
 		return Input.KEY_NAMES.computeIfAbsent(keyCode, _ -> Objects.requireNonNullElseGet(GLFW.glfwGetKeyName(keyCode, -1), () -> Input.KEY_NAMES.get(GLFW.GLFW_KEY_UNKNOWN)));
@@ -66,8 +75,13 @@ public final class Input {
 				currentState &= ~mask;
 			}
 			this.buttonStates = (this.buttonStates & 0xFF00) | currentState;
-			this.mouseButtonPositions[currentIndex] = this.getMouseX();
-			this.mouseButtonPositions[currentIndex + 1] = this.getMouseY();
+			final double mx = this.getMouseX();
+			final double my = this.getMouseY();
+			this.mouseButtonPositions[currentIndex] = mx;
+			this.mouseButtonPositions[currentIndex + 1] = my;
+			if (this.isClicked(button, false)) {
+				this.dawn.getGuiManager().handleMouseEvent(button, -1, mx, my);
+			}
 		}
 	}
 
@@ -196,6 +210,10 @@ public final class Input {
 
 	public boolean hasKeyModSuper(final int keyCode) {
 		return (this.getKeyMods(keyCode) & GLFW_MOD_SUPER) == GLFW_MOD_SUPER;
+	}
+
+	public static Input get() {
+		return Objects.requireNonNull(Input.INSTANCE.get(), "Called too early");
 	}
 
 	static {

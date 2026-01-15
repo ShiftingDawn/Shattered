@@ -15,8 +15,8 @@ public final class Display {
 	private static @Getter int windowHeight;
 	private static @Getter int frameBufferWidth;
 	private static @Getter int frameBufferHeight;
-	private static int logicalWidth = 600;
-	private static int logicalHeight = 480;
+	private static int logicalWidth = 320;
+	private static int logicalHeight = 240;
 
 	static void setWindowSize(final int width, final int height) {
 		Display.windowWidth = width;
