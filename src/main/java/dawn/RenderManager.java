@@ -44,7 +44,7 @@ public final class RenderManager {
 	}
 
 	private void resetShader() {
-		glViewport(0, 0, Display.getPhysicalWidth(), Display.getPhysicalHeight());
+		glViewport(0, 0, Display.getFrameBufferWidth(), Display.getFrameBufferHeight());
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixProjection()), false,
 			new Matrix4f().ortho(0, Display.getWidth(), Display.getHeight(), 0, 1, -1));
 		ShaderProps.setUniform4(ShaderProps.getNamedLocation(this.shader, this.shader.getAsset().getPropMatrixModelView()), false,

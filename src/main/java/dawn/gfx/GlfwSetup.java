@@ -1,11 +1,13 @@
 package dawn.gfx;
 
+import java.nio.IntBuffer;
 import dawn.Dawn;
 import dawn.lib.ExitException;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.glfw.GLFW.GLFW_BLUE_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
@@ -26,6 +28,7 @@ import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwInitHint;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
@@ -42,7 +45,7 @@ public final class GlfwSetup {
 	public static final Logger LOGGER = Dawn.getLogger("Display");
 
 	public static void init(final int displayWidth, final int displayHeight) {
-		Display.setPhysicalSize(displayWidth, displayHeight);
+		Display.setWindowSize(displayWidth, displayHeight);
 		if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
 			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
 		}
@@ -67,16 +70,22 @@ public final class GlfwSetup {
 		glfwWindowHint(GLFW_GREEN_BITS, monitorMode.greenBits());
 		glfwWindowHint(GLFW_BLUE_BITS, monitorMode.blueBits());
 
-		final long window = glfwCreateWindow(Display.getPhysicalWidth(), Display.getPhysicalHeight(), Dawn.NAME, NULL, NULL);
+		final long window = glfwCreateWindow(Display.getWindowWidth(), Display.getWindowHeight(), Dawn.NAME, NULL, NULL);
 		if (window == NULL) {
 			GlfwSetup.LOGGER.fatal("Could not create window");
 			throw new ExitException();
+		}
+		Display.setWindow(window);
+		try (final MemoryStack Stack = MemoryStack.stackPush()) {
+			final IntBuffer widthPtr = Stack.mallocInt(1);
+			final IntBuffer heightPtr = Stack.mallocInt(1);
+			glfwGetWindowSize(window, widthPtr, heightPtr);
+			Display.setFrameBufferSize(widthPtr.get(), heightPtr.get());
 		}
 
 		Callbacks.init(window);
 
 		glfwShowWindow(window);
-		Display.setWindow(window);
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 		GL.createCapabilities();
