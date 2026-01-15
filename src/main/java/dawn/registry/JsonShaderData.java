@@ -17,7 +17,7 @@ class JsonShaderData {
 	@Json.Required
 	public String propOutColor;
 
-	@SerializedName("prop_matrix_rojection")
+	@SerializedName("prop_matrix_projection")
 	@Json.Required
 	public String propMatrixProjection;
 
