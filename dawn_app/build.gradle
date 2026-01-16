@@ -1,0 +1,7 @@
+plugins {
+	id "java"
+	id "idea"
+	id("io.freefair.lombok") version "9.1.0"
+}
+
+apply from: "$rootDir/gradle/env.gradle"

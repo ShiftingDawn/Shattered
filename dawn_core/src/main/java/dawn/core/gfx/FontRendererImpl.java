@@ -1,0 +1,168 @@
+package dawn.core.gfx;
+
+import java.util.function.Function;
+import dawn.Dawn;
+import dawn.Identifier;
+import dawn.asset.Font;
+import dawn.asset.Shader;
+import dawn.gfx.Color;
+import dawn.gfx.FontRenderer;
+import dawn.gfx.GlStateManager;
+import dawn.gfx.ShaderProps;
+import dawn.init.Fonts;
+import dawn.registry.ProtoShader;
+import org.joml.Matrix4f;
+import org.joml.Vector2i;
+import org.jspecify.annotations.Nullable;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLE_STRIP;
+import static org.lwjgl.opengl.GL11.GL_TRUE;
+
+final class FontRendererImpl implements FontRenderer {
+
+	private final Dawn dawn;
+	private final Function<Identifier, Font> fontGetter;
+	private boolean writing = false;
+	private final Vector2i position = new Vector2i(0, 0);
+	private int fontSize = Font.SIZE;
+	private Color color = Color.WHITE;
+	private @Nullable String txt;
+
+	public FontRendererImpl(final Dawn dawn, final Function<Identifier, Font> fontGetter) {
+		this.dawn = dawn;
+		this.fontGetter = fontGetter;
+		this.reset();
+	}
+
+	private void testWriting() {
+		if (!this.writing) {
+			throw new IllegalStateException("Not writing");
+		}
+	}
+
+	private void reset() {
+		this.position.set(0, 0);
+		this.color = Color.WHITE;
+		this.txt = null;
+		this.fontSize = Font.SIZE;
+	}
+
+	@Override
+	public FontRenderer start() {
+		if (this.writing) {
+			throw new IllegalStateException("Already writing");
+		}
+		this.writing = true;
+		return this;
+	}
+
+	@Override
+	public FontRenderer set(final String text, final Color tint) {
+		this.testWriting();
+		this.txt = text;
+		this.color = tint;
+		return this;
+	}
+
+	@Override
+	public FontRenderer set(final String text) {
+		return this.set(text, Color.WHITE);
+	}
+
+	@Override
+	public FontRenderer size(final int size) {
+		this.testWriting();
+		this.fontSize = size > 0 ? size : Font.SIZE;
+		return this;
+	}
+
+	@Override
+	public FontRenderer pos(final int x, final int y) {
+		this.testWriting();
+		this.position.set(x, y);
+		return this;
+	}
+
+	@Override
+	public FontRenderer color(final Color color) {
+		this.testWriting();
+		this.color = color;
+		return this;
+	}
+
+	@Override
+	public FontRenderer write() {
+		this.testWriting();
+		if (this.txt != null) {
+			final WriteCall call = new WriteCall(this.txt, this.fontSize, this.position.x(), this.position.y(), this.getFont(), this.color);
+			final Shader shader = this.dawn.getRenderManager().getRootShader();
+			FontRendererImpl.render(call, shader, shader.proto());
+		}
+		this.reset();
+		return this;
+	}
+
+	private Font getFont() {
+		return this.fontGetter.apply(Fonts.ROOT);
+	}
+
+	private static void render(final WriteCall call, final Shader shader, final ProtoShader proto) {
+		if (!proto.isCanTexture()) {
+			throw new IllegalStateException("The currently bound shader '%s' does not support rendering textures (needed for font)".formatted(proto.getRegistryKey()));
+		}
+		final float scale = FontRenderer.getFontScale(call.font, call.size);
+		float penX = call.x();
+		final float penY = call.y() + FontRenderer.getStringHeight(call.font, call.size);
+		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, call.txt().length() * 6, GL_TRIANGLE_STRIP, () -> {
+			GlStateManager.gl().bindShader(shader.getProgram());
+			GlStateManager.gl().blendSimple();
+			GlStateManager.gl().bindTexture(call.font().getTexture().id());
+			ShaderProps.get().setUniform1(ShaderProps.get().getNamedLocation(shader, proto.getPropEnableTexture()), GL_TRUE);
+			ShaderProps.get().setUniform4(ShaderProps.get().getNamedLocation(shader, proto.getPropMatrixTessellatorTransform()), false, new Matrix4f());
+			GlStateManager.gl().textureFilterSmooth();
+		});
+		for (int i = 0; i < call.txt().length(); ++i) {
+			final char c = call.txt().charAt(i);
+			final Font.Glyph glyph = call.font().get(c);
+			if (glyph == null) {
+				continue;
+			}
+			final float x0 = penX + (glyph.xOffset() * scale);
+			final float y0 = penY + (glyph.yOffset() * scale);
+			final float x1 = x0 + ((glyph.x1() - glyph.x0()) * scale);
+			final float y1 = y0 + ((glyph.y1() - glyph.y0()) * scale);
+			final float[] uvs = glyph.getNormalizedUvs(call.font());
+			if (i > 0) {
+				//Connect to previous char so we can write the whole string in 1 call
+				builder.position(x0, y0).color(call.color()).uv(uvs[0], uvs[1]).endVertex();
+			}
+			builder.position(x0, y0).color(call.color()).uv(uvs[0], uvs[1]).endVertex();
+			builder.position(x0, y1).color(call.color()).uv(uvs[0], uvs[3]).endVertex();
+			builder.position(x1, y0).color(call.color()).uv(uvs[2], uvs[1]).endVertex();
+			builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
+			if (i < call.txt().length() - 1) {
+				//Connect to next char so we can write the whole string in 1 call
+				builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
+			}
+			penX += (glyph.advance() * scale);
+		}
+		builder.draw();
+	}
+
+	@Override
+	public void end() {
+		this.writing = false;
+	}
+
+	@Override
+	public int getStringWidth(final String str, final int fontSize) {
+		return FontRenderer.getStringWidth(this.getFont(), str, fontSize);
+	}
+
+	@Override
+	public int getStringHeight(final int fontSize) {
+		return FontRenderer.getStringHeight(this.getFont(), fontSize);
+	}
+
+	private record WriteCall(String txt, int size, int x, int y, Font font, Color color) {
+	}
+}

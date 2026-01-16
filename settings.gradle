@@ -3,3 +3,12 @@ plugins {
 }
 
 rootProject.name = "Shattered"
+
+include "dawn_core"
+project(":dawn_core").name = "core"
+
+include "dawn_lib"
+project(":dawn_lib").name = "lib"
+
+include "dawn_app"
+project(":dawn_app").name = "app"

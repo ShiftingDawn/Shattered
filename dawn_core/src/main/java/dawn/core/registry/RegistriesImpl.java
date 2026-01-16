@@ -1,0 +1,95 @@
+package dawn.core.registry;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Stream;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import dawn.Identifier;
+import dawn.core.DawnImpl;
+import dawn.core.ExitException;
+import dawn.core.lib.json.GsonIdentifierAdapter;
+import dawn.lib.ResourceFinder;
+import dawn.lib.RunOnce;
+import dawn.registry.ProtoFont;
+import dawn.registry.ProtoShader;
+import dawn.registry.ProtoTexture;
+import dawn.registry.Registries;
+import dawn.registry.Registry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public final class RegistriesImpl implements Registries {
+
+	private static final ExecutorService EXECUTOR_SERVICE = Executors.newVirtualThreadPerTaskExecutor();
+	private static final RunOnce INITIALIZED = new RunOnce();
+	private static final Gson LOADER_GSON;
+	private static final TypeToken<List<Identifier>> JSON_IDENTIFIER_LIST_TOKEN = new TypeToken<>() {};
+
+	private static final RegistryImpl<ProtoShader> SHADERS = new RegistryImpl<>("shader", new ProtoShaderContentFactory());
+	private static final RegistryImpl<ProtoTexture> TEXTURES = new RegistryImpl<>("texture", new ProtoTextureContentFactory());
+	private static final RegistryImpl<ProtoFont> FONTS = new RegistryImpl<>("font", new ProtoFontContentFactory());
+
+	public static void load(final ResourceFinder resources) {
+		RegistriesImpl.INITIALIZED.test(() -> "Registries have already been initialized");
+		RegistriesImpl.loadAll(resources, Identifier.DEFAULT_DOMAIN).join();
+	}
+
+	@Override
+	public Registry<ProtoShader> shaders() {
+		return RegistriesImpl.SHADERS;
+	}
+
+	@Override
+	public Registry<ProtoTexture> textures() {
+		return RegistriesImpl.TEXTURES;
+	}
+
+	@Override
+	public Registry<ProtoFont> fonts() {
+		return RegistriesImpl.FONTS;
+	}
+
+	private static CompletableFuture<Void> loadAll(final ResourceFinder resources, final String domain) {
+		return CompletableFuture.allOf(Stream.of(
+			RegistriesImpl.SHADERS, RegistriesImpl.TEXTURES, RegistriesImpl.FONTS
+		).map(reg -> RegistriesImpl.loadRegistry(resources, domain, reg)).toList().toArray(CompletableFuture[]::new));
+	}
+
+	private static CompletableFuture<Void> loadRegistry(final ResourceFinder resources, final String domain, final RegistryImpl<?> registry) {
+		final Identifier registryIdentifier = Identifier.of(domain, registry.getRegistryName());
+		return CompletableFuture.runAsync(() -> {
+			try {
+				final Logger logger = LogManager.getLogger("Registry{%s}".formatted(registryIdentifier));
+				final List<Identifier> content = RegistriesImpl.readRegistryContent(resources, registryIdentifier);
+				CompletableFuture.allOf(content.stream().map(
+					id -> registry.loadContent(RegistriesImpl.EXECUTOR_SERVICE, logger, resources, id)
+				).toArray(CompletableFuture[]::new)).join();
+			} catch (final IOException e) {
+				DawnImpl.LOGGER.fatal("Could not load registry data", e);
+				throw new ExitException();
+			}
+		}, RegistriesImpl.EXECUTOR_SERVICE);
+	}
+
+	private static List<Identifier> readRegistryContent(final ResourceFinder resources, final Identifier registry) throws IOException {
+		final String path = resources.makePath(registry, null, "json");
+		try (InputStream stream = resources.getStream(path)) {
+			if (stream == null) {
+				throw new FileNotFoundException("Could not load registry file. Expected path: " + path);
+			}
+			return RegistriesImpl.LOADER_GSON.fromJson(new InputStreamReader(stream), RegistriesImpl.JSON_IDENTIFIER_LIST_TOKEN);
+		}
+	}
+
+	static {
+		LOADER_GSON = new GsonBuilder().registerTypeAdapter(Identifier.class, new GsonIdentifierAdapter()).create();
+	}
+}

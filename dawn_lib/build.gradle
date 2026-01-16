@@ -1,0 +1,15 @@
+plugins {
+	id "java-library"
+	id "idea"
+	id("io.freefair.lombok") version "9.1.0"
+}
+
+dependencies {
+	compileOnly(libs.jspecify)
+	compileOnly(libs.log4j)
+	api(libs.fastutil)
+	api(libs.gson)
+	api(libs.joml)
+}
+
+apply from: "$rootDir/gradle/env.gradle"

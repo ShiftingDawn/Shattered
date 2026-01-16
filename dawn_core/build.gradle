@@ -1,0 +1,44 @@
+plugins {
+	id "java"
+	id "application"
+	id "idea"
+	id("io.freefair.lombok") version "9.1.0"
+}
+
+def lwjglNatives = "natives-linux"
+
+dependencies {
+	implementation(project(":lib"))
+	implementation(libs.log4j)
+	compileOnly(libs.jspecify)
+	implementation(platform(libs.lwjgl))
+	implementation("org.lwjgl:lwjgl")
+	implementation("org.lwjgl:lwjgl-glfw")
+	implementation("org.lwjgl:lwjgl-openal")
+	implementation("org.lwjgl:lwjgl-opengl")
+	implementation("org.lwjgl:lwjgl-stb")
+	implementation("org.lwjgl:lwjgl::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-glfw::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-openal::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-opengl::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-stb::$lwjglNatives")
+}
+
+application {
+	mainClass = "Main"
+
+	applicationDefaultJvmArgs = [
+		"--enable-native-access=ALL-UNNAMED",
+		"-Ddawn.workspace.root=$rootDir/run",
+		"-Ddawn.log.level=TRACE",
+	]
+}
+
+apply from: "$rootDir/gradle/env.gradle"
+
+compileJava {
+	options.compilerArgs += [
+		"--add-exports",
+		"com.google.gson/com.google.gson.internal.bind=dawn.core"
+	]
+}
