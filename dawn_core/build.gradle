@@ -9,6 +9,7 @@ def lwjglNatives = "natives-linux"
 
 dependencies {
 	implementation(project(":lib"))
+	runtimeOnly(project(":app"))
 	implementation(libs.log4j)
 	compileOnly(libs.jspecify)
 	implementation(platform(libs.lwjgl))
@@ -25,10 +26,12 @@ dependencies {
 }
 
 application {
-	mainClass = "Main"
+	mainModule = "dawn.core"
+	mainClass = "dawn.core.Main"
 
 	applicationDefaultJvmArgs = [
-		"--enable-native-access=ALL-UNNAMED",
+		"--enable-native-access=org.lwjgl,org.lwjgl.opengl,org.lwjgl.glfw,org.lwjgl.stb",
+		"--add-exports=com.google.gson/com.google.gson.internal.bind=dawn.core",
 		"-Ddawn.workspace.root=$rootDir/run",
 		"-Ddawn.log.level=TRACE",
 	]
@@ -41,4 +44,16 @@ compileJava {
 		"--add-exports",
 		"com.google.gson/com.google.gson.internal.bind=dawn.core"
 	]
+}
+
+jar {
+	manifest {
+		attributes(
+			"Implementation-Title": rootProject.name,
+			"Implementation-Version": project.version,
+			"Main-Class": "dawn.core.Main",
+			"Main-Module": "dawn.core",
+			"Class-Path": configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+		)
+	}
 }

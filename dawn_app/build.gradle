@@ -4,4 +4,11 @@ plugins {
 	id("io.freefair.lombok") version "9.1.0"
 }
 
+dependencies {
+	implementation(project(":lib"))
+	implementation(project(":core"))
+	implementation(libs.log4j)
+	compileOnly(libs.jspecify)
+}
+
 apply from: "$rootDir/gradle/env.gradle"

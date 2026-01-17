@@ -1,5 +1,5 @@
 module dawn.lib {
-	requires org.jspecify;
+	requires static org.jspecify;
 	requires org.apache.logging.log4j;
 	requires static lombok;
 	requires com.google.gson;

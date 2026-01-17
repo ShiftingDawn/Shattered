@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import dawn.Dawn;
+import dawn.core.app.IBootApp;
 import dawn.core.asset.AssetManagerImpl;
 import dawn.core.event.EventBusImpl;
 import dawn.core.gfx.GlStateManagerImpl;
@@ -12,7 +13,6 @@ import dawn.core.gfx.RenderManagerImpl;
 import dawn.core.gfx.ShaderPropsImpl;
 import dawn.core.gfx.WindowImpl;
 import dawn.core.gui.GuiManagerImpl;
-import dawn.core.gui.ScreenMainMenu;
 import dawn.core.lib.ArgHandler;
 import dawn.core.lib.json.GsonFactory;
 import dawn.core.registry.RegistriesImpl;
@@ -35,10 +35,13 @@ public final class DawnImpl implements Dawn {
 	private final @Getter ResourceFinder resources;
 	private final @Getter WindowImpl window;
 	private final @Getter AssetManagerImpl assets;
+	private final IBootApp bootApp;
 	private @Getter RenderManagerImpl renderManager;
 	private @Getter GuiManagerImpl guiManager;
 
-	private DawnImpl(final File rootDir, final String[] args) {
+	private DawnImpl(final File rootDir, final String[] args, final IBootApp bootApp) {
+		this.bootApp = bootApp;
+		this.bootApp.preInit(this);
 		DawnLib.INSTANCE = this;
 		this.args = new ArgHandler(args);
 		try {
@@ -70,7 +73,7 @@ public final class DawnImpl implements Dawn {
 		this.assets.init();
 		this.renderManager = new RenderManagerImpl(this, this.assets);
 		this.guiManager = new GuiManagerImpl(this.window);
-		this.getGuiManager().openScreen(new ScreenMainMenu());
+		this.bootApp.init();
 	}
 
 	private void run() {
@@ -95,11 +98,11 @@ public final class DawnImpl implements Dawn {
 		this.running.set(false);
 	}
 
-	public static void start(final File rootDir, final String[] args) {
+	public static void start(final File rootDir, final String[] args, final IBootApp bootApp) {
 		//noinspection ConstantValue
 		if (Dawn.getDawn() != null) {
 			throw new IllegalStateException();
 		}
-		new DawnImpl(rootDir, args);
+		new DawnImpl(rootDir, args, bootApp);
 	}
 }

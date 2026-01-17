@@ -32,15 +32,12 @@ final class ResourceFinderImpl implements dawn.lib.ResourceFinder {
 	}
 
 	@Override
-	public @Nullable URL getResource(String path) throws IOException {
+	public @Nullable URL getResource(final String path) throws IOException {
 		final File overriddenFile = this.workspace.getBinFile(path);
 		if (overriddenFile.exists()) {
 			return overriddenFile.toURI().toURL();
 		}
-		if (path.startsWith("/")) {
-			path = path.substring(1);
-		}
-		return Dawn.class.getClassLoader().getResource(path);
+		return this.getClass().getResource(path);
 	}
 
 	@Override

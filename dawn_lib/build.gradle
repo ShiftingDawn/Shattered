@@ -9,7 +9,9 @@ dependencies {
 	compileOnly(libs.log4j)
 	api(libs.fastutil)
 	api(libs.gson)
-	api(libs.joml)
+	api(libs.joml) {
+		exclude(group: "org.jetbrains.kotlin")
+	}
 }
 
 apply from: "$rootDir/gradle/env.gradle"

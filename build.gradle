@@ -1,0 +1,53 @@
+import groovy.json.JsonOutput
+
+tasks.register("dawn_build", Sync) {
+	group = "distribution"
+	def outputDir = layout.buildDirectory.dir("dawn")
+	dependsOn(subprojects.collect { it.tasks.named("jar") })
+	into(outputDir)
+	def buildInfo = [
+		deps          : [:],
+		allowedNatives: [],
+		addExports    : [],
+	]
+	subprojects.each { proj ->
+		proj.configurations.runtimeClasspath.each { file ->
+			def artifact = proj.configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.find { it.file == file }
+			def moduleGroup = artifact.moduleVersion?.id?.group ?: "unknown.group"
+			def moduleName = (artifact.name ?: "unknown-name") + (artifact?.classifier ? "-${artifact.classifier}" : "")
+			def moduleVersion = artifact.moduleVersion?.id?.version ?: "0.0.0"
+			if (moduleVersion == "unspecified") moduleVersion = "0.0.0"
+			if (!buildInfo.deps.containsKey(moduleGroup)) {
+				buildInfo.deps[moduleGroup] = [:]
+			}
+			buildInfo.deps[moduleGroup][moduleName] = moduleVersion
+			from(file) {
+				into(moduleGroup)
+				rename { "${moduleName}-${moduleVersion}.jar" }
+			}
+		}
+
+		if (proj.plugins.hasPlugin("application")) {
+			def appExt = proj.extensions.findByName("application")
+			if (appExt != null) {
+				buildInfo.allowedNatives += splitArg("--enable-native-access", appExt.applicationDefaultJvmArgs)
+				buildInfo.addExports += splitArg("--add-exports", appExt.applicationDefaultJvmArgs)
+			}
+		}
+	}
+	doLast {
+		def file = outputDir.get().file("buildinfo.json").asFile
+		file.parentFile.mkdirs()
+		file.text = JsonOutput.toJson(buildInfo)
+	}
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+static String[] splitArg(String prefix, List<String> allArgs) {
+	for (final def arg in allArgs) {
+		if (arg.startsWith(prefix)) {
+			return arg.substring(prefix.length() + 1).split(",")
+		}
+	}
+	return []
+}
