@@ -1,46 +1,68 @@
 import groovy.json.JsonOutput
 
-tasks.register("dawn_build", Sync) {
-	group = "distribution"
-	def outputDir = layout.buildDirectory.dir("dawn")
+import java.nio.file.Files
+import java.security.MessageDigest
+
+tasks.register("build_and_copy", Sync) {
+	group = "dawn"
 	dependsOn(subprojects.collect { it.tasks.named("jar") })
+	def outputDir = layout.buildDirectory.dir("dawn")
 	into(outputDir)
-	def buildInfo = [
-		deps          : [:],
-		allowedNatives: [],
-		addExports    : [],
-	]
+	def libInfo = [:]
 	subprojects.each { proj ->
 		proj.configurations.runtimeClasspath.each { file ->
 			def artifact = proj.configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.find { it.file == file }
 			def moduleGroup = artifact.moduleVersion?.id?.group ?: "unknown.group"
-			def moduleName = (artifact.name ?: "unknown-name") + (artifact?.classifier ? "-${artifact.classifier}" : "")
+			def moduleName = artifact.name ?: "unknown-name"
 			def moduleVersion = artifact.moduleVersion?.id?.version ?: "0.0.0"
 			if (moduleVersion == "unspecified") moduleVersion = "0.0.0"
-			if (!buildInfo.deps.containsKey(moduleGroup)) {
-				buildInfo.deps[moduleGroup] = [:]
-			}
-			buildInfo.deps[moduleGroup][moduleName] = moduleVersion
+			def moduleClassifier = artifact.classifier ?: ""
+			def filename = "${moduleName}-${moduleVersion}" + (moduleClassifier ? "-${moduleClassifier}" : "")
+			libInfo[filename] = [
+				"name"      : moduleName,
+				"group"     : moduleGroup,
+				"version"   : moduleVersion,
+				"classifier": moduleClassifier,
+				"hash"      : getFileMd5(file)
+			]
 			from(file) {
-				into(moduleGroup)
-				rename { "${moduleName}-${moduleVersion}.jar" }
-			}
-		}
-
-		if (proj.plugins.hasPlugin("application")) {
-			def appExt = proj.extensions.findByName("application")
-			if (appExt != null) {
-				buildInfo.allowedNatives += splitArg("--enable-native-access", appExt.applicationDefaultJvmArgs)
-				buildInfo.addExports += splitArg("--add-exports", appExt.applicationDefaultJvmArgs)
+				rename { "${filename}.jar" }
 			}
 		}
 	}
 	doLast {
-		def file = outputDir.get().file("buildinfo.json").asFile
+		def file = outputDir.get().file("libs.json").asFile
 		file.parentFile.mkdirs()
-		file.text = JsonOutput.toJson(buildInfo)
+		file.text = JsonOutput.toJson(libInfo)
 	}
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+static def getFileMd5(File file) {
+	byte[] data = Files.readAllBytes(file.toPath());
+	byte[] hash = MessageDigest.getInstance("MD5").digest(data);
+	return new BigInteger(1, hash).toString(16);
+}
+
+tasks.register("make_metadata") {
+	group = "dawn"
+	def outputDir = layout.buildDirectory.dir("dawn")
+	outputs.file(outputDir.map { it.file("meta.json") })
+	doLast {
+		def meta = [allowedNatives: [], addExports: []]
+		subprojects.each { proj ->
+			if (proj.plugins.hasPlugin("application")) {
+				def appExt = proj.extensions.findByName("application")
+				if (appExt != null) {
+					meta.allowedNatives += splitArg("--enable-native-access", appExt.applicationDefaultJvmArgs)
+					meta.addExports += splitArg("--add-exports", appExt.applicationDefaultJvmArgs)
+				}
+			}
+		}
+		def file = outputDir.get().file("meta.json").asFile
+		file.parentFile.mkdirs()
+		file.text = JsonOutput.toJson(meta)
+	}
 }
 
 static String[] splitArg(String prefix, List<String> allArgs) {
@@ -50,4 +72,13 @@ static String[] splitArg(String prefix, List<String> allArgs) {
 		}
 	}
 	return []
+}
+
+tasks.register("dawn_build", Zip) {
+	group = "dawn"
+	dependsOn tasks.build_and_copy
+	dependsOn tasks.make_metadata
+	archiveBaseName = "fullbuild"
+	destinationDirectory = layout.buildDirectory.dir("fullbuild")
+	from(layout.buildDirectory.dir("dawn"))
 }
