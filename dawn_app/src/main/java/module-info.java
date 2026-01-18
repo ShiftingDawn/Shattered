@@ -4,7 +4,6 @@ module dawn.app {
 	requires static org.jspecify;
 	requires static lombok;
 	requires org.apache.logging.log4j;
-	requires java.desktop;
 
 	provides dawn.core.app.IBootApp with dawn.app.DawnApp;
 }

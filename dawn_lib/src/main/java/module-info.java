@@ -4,7 +4,6 @@ module dawn.lib {
 	requires static lombok;
 	requires com.google.gson;
 	requires org.joml;
-	requires java.xml;
 
 	exports dawn;
 	exports dawn.internal to dawn.core;
