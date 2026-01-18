@@ -26,25 +26,20 @@ dependencies {
 }
 
 application {
-	mainModule = "dawn.core"
 	mainClass = "dawn.core.Main"
 
 	applicationDefaultJvmArgs = [
-		"--enable-native-access=org.lwjgl,org.lwjgl.opengl,org.lwjgl.glfw,org.lwjgl.stb",
-		"--add-exports=com.google.gson/com.google.gson.internal.bind=dawn.core",
+		"--enable-native-access=ALL-UNNAMED",
 		"-Ddawn.workspace.root=$rootDir/run",
 		"-Ddawn.log.level=TRACE",
 	]
 }
 
-apply from: "$rootDir/gradle/env.gradle"
-
-compileJava {
-	options.compilerArgs += [
-		"--add-exports",
-		"com.google.gson/com.google.gson.internal.bind=dawn.core"
-	]
+tasks.named("run") {
+	classpath = sourceSets.main.runtimeClasspath.filter { it != jar.archiveFile.get().asFile }
 }
+
+apply from: "$rootDir/gradle/env.gradle"
 
 jar {
 	manifest {
@@ -52,7 +47,6 @@ jar {
 			"Implementation-Title": rootProject.name,
 			"Implementation-Version": project.version,
 			"Main-Class": "dawn.core.Main",
-			"Main-Module": "dawn.core",
 			"Class-Path": configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
 		)
 	}

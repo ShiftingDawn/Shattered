@@ -3,8 +3,14 @@ package dawn.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
 import dawn.Dawn;
 import dawn.Identifier;
 import dawn.lib.Workspace;
@@ -38,6 +44,31 @@ final class ResourceFinderImpl implements dawn.lib.ResourceFinder {
 			return overriddenFile.toURI().toURL();
 		}
 		return this.getClass().getResource(path);
+	}
+
+	@Override
+	public List<URL> getResources(String path) throws IOException {
+		final HashSet<String> urlStrings = new HashSet<>();
+		final File overriddenFile = this.workspace.getBinFile(path);
+		if (overriddenFile.exists()) {
+			urlStrings.add(overriddenFile.toURI().toString());
+		}
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		final Enumeration<URL> resources = Dawn.class.getClassLoader().getResources(path);
+		while (resources.hasMoreElements()) {
+			urlStrings.add(resources.nextElement().toString());
+		}
+		final List<URL> result = new ArrayList<>();
+		for (final String urlString : urlStrings) {
+			try {
+				result.add(new URI(urlString).toURL());
+			} catch (final URISyntaxException e) {
+				throw new IOException(e);
+			}
+		}
+		return result;
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -80,13 +82,19 @@ public final class RegistriesImpl implements Registries {
 	}
 
 	private static List<Identifier> readRegistryContent(final ResourceFinder resources, final Identifier registry) throws IOException {
+		final List<Identifier> result = new ArrayList<>();
 		final String path = resources.makePath(registry, null, "json");
-		try (InputStream stream = resources.getStream(path)) {
-			if (stream == null) {
-				throw new FileNotFoundException("Could not load registry file. Expected path: " + path);
+		final var urls = resources.getResources(path);
+		for (final URL url : urls) {
+			try (InputStream stream = url.openStream()) {
+				if (stream == null) {
+					throw new FileNotFoundException("Could not load registry file. Expected path: " + path);
+				}
+				final List<Identifier> ids = RegistriesImpl.LOADER_GSON.fromJson(new InputStreamReader(stream), RegistriesImpl.JSON_IDENTIFIER_LIST_TOKEN);
+				result.addAll(ids);
 			}
-			return RegistriesImpl.LOADER_GSON.fromJson(new InputStreamReader(stream), RegistriesImpl.JSON_IDENTIFIER_LIST_TOKEN);
 		}
+		return result;
 	}
 
 	static {
