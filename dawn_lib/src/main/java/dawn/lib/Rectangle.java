@@ -79,4 +79,8 @@ public record Rectangle(int x, int y, int w, int h) {
 	public Vector4i toVec() {
 		return new Vector4i(this.x, this.y, this.w, this.h);
 	}
+
+	public boolean intersects(final Rectangle other) {
+		return this.x() < other.xMax() && this.xMax() > other.x() && this.y() < other.yMax() && this.yMax() > other.y();
+	}
 }

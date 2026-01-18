@@ -2,29 +2,31 @@ package dawn.gui;
 
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
+import dawn.input.EventResult;
 import dawn.input.Input;
+import dawn.lib.Rectangle;
 
 public abstract class GuiBase {
 
 	public void tick() {
 	}
 
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Input input) {
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
 	}
 
-	public void renderForeground(final Tessellator tessellator, final FontRenderer fontRenderer, final Input input) {
+	public void renderForeground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
 	}
 
-	public boolean onMousePressed(final int button, final int mouseX, final int mouseY) {
-		return false;
+	public EventResult onMousePressed(final int button, final int mouseX, final int mouseY) {
+		return EventResult.DEFAULT;
 	}
 
-	public boolean onMouseReleased(final int button, final int mouseX, final int mouseY) {
-		return false;
+	public EventResult onMouseReleased(final int button, final int mouseX, final int mouseY) {
+		return EventResult.DEFAULT;
 	}
 
-	public boolean onMouseClicked(final int button, final int mouseX, final int mouseY) {
-		return false;
+	public EventResult onMouseClicked(final int button, final int mouseX, final int mouseY) {
+		return EventResult.DEFAULT;
 	}
 
 	public abstract int getX();
@@ -35,7 +37,15 @@ public abstract class GuiBase {
 
 	public abstract int getHeight();
 
+	public final Rectangle getBounds() {
+		return new Rectangle(this.getX(), this.getY(), this.getWidth(), this.getHeight());
+	}
+
 	public boolean contains(final int x, final int y) {
 		return x >= this.getX() && x <= this.getX() + this.getWidth() && y >= this.getY() && y <= this.getY() + this.getHeight();
+	}
+
+	public boolean isBlockingInteractionBelow() {
+		return true;
 	}
 }

@@ -4,7 +4,9 @@ import dawn.gfx.Color;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.gui.GuiWidget;
+import dawn.gui.RenderPhase;
 import dawn.init.Textures;
+import dawn.input.EventResult;
 import dawn.input.Input;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,19 +25,21 @@ public class ButtonWidget extends GuiWidget {
 	}
 
 	@Override
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Input input) {
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
 		final int mx = (int) input.getMouseX();
 		final int my = (int) input.getMouseY();
-		tessellator.start();
-		if (input.isMouseDownLeft() && this.contains(mx, my)) {
-			tessellator.set(Textures.GUI_BUTTON_PRESSED).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
-		} else {
-			tessellator.set(Textures.GUI_BUTTON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
-			if (this.contains(mx, my)) {
-				tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+		switch (phase) {
+			case BACKGROUND -> tessellator.start().set(Textures.GUI_BUTTON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw().end();
+			case INTERACTIVE -> {
+				tessellator.start();
+				if (input.isMouseDownLeft() && this.contains(mx, my)) {
+					tessellator.set(Textures.GUI_BUTTON_PRESSED).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+				} else if (this.contains(mx, my)) {
+					tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+				}
+				tessellator.end();
 			}
 		}
-		tessellator.end();
 		if (this.label != null) {
 			final int fontSize = Math.min(this.getHeight() / 4 * 3, 16);
 			final int w = fontRenderer.getStringWidth(this.label, fontSize);
@@ -46,8 +50,8 @@ public class ButtonWidget extends GuiWidget {
 	}
 
 	@Override
-	public boolean onMouseClicked(final int button, final int mouseX, final int mouseY) {
+	public EventResult onMouseClicked(final int button, final int mouseX, final int mouseY) {
 		this.callback.run();
-		return true;
+		return EventResult.CONSUME;
 	}
 }

@@ -28,6 +28,16 @@ public abstract class GuiWidget extends GuiBase {
 		this.setY(() -> y);
 	}
 
+	public final void setPos(final IntSupplier x, final IntSupplier y) {
+		this.setX(x);
+		this.setY(y);
+	}
+
+	public final void setPos(final int x, final int y) {
+		this.setX(x);
+		this.setY(y);
+	}
+
 	public final void setWidth(final IntSupplier width) {
 		this.width = width;
 	}
@@ -42,6 +52,16 @@ public abstract class GuiWidget extends GuiBase {
 
 	public final void setHeight(final int height) {
 		this.setHeight(() -> height);
+	}
+
+	public final void setSize(final IntSupplier width, final IntSupplier height) {
+		this.setWidth(width);
+		this.setHeight(height);
+	}
+
+	public final void setSize(final int width, final int height) {
+		this.setWidth(width);
+		this.setHeight(height);
 	}
 
 	@Override

@@ -4,18 +4,20 @@ import dawn.app.DawnApp;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.gui.GuiScreen;
+import dawn.gui.RenderPhase;
 import dawn.init.Textures;
 import dawn.input.Input;
 
 public final class ScreenMainMenu extends GuiScreen {
 
+	private final ButtonWidget buttonOptions = this.add(new ButtonWidget("Options", this::onButtonOptions));
 	private final ButtonWidget buttonExit = this.add(new ButtonWidget("Exit", this::onButtonExit));
 
 	public ScreenMainMenu() {
-		this.buttonExit.setX(() -> this.getX() + this.getWidth() / 2 - 120);
-		this.buttonExit.setY(() -> this.getY() + this.getHeight() - 24 - 10);
-		this.buttonExit.setWidth(240);
-		this.buttonExit.setHeight(24);
+		this.buttonExit.setSize(240, 24);
+		this.buttonExit.setPos(() -> this.getX() + this.getWidth() / 2 - 120, () -> this.getY() + this.getHeight() - 24 - 10);
+		this.buttonOptions.setPos(() -> this.getX() + this.getWidth() / 2 - 120, () -> this.buttonExit.getY() - 24 - 10);
+		this.buttonOptions.setSize(240, 24);
 	}
 
 	@Override
@@ -25,11 +27,18 @@ public final class ScreenMainMenu extends GuiScreen {
 	}
 
 	@Override
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Input input) {
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
+		if (phase != RenderPhase.BACKGROUND) {
+			return;
+		}
 		tessellator.start()
 			.set(Textures.ARGON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw()
 			.set(Textures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw()
 			.end();
+	}
+
+	private void onButtonOptions() {
+		this.getGuiManager().openScreen(new ScreenOptions());
 	}
 
 	private void onButtonExit() {
