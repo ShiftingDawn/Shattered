@@ -14,10 +14,13 @@ import dawn.gui.GuiWidget;
 import dawn.gui.Interactivity;
 import dawn.input.EventResult;
 import dawn.input.Input;
+import dawn.input.KeyEventType;
+import dawn.input.KeyMods;
 import dawn.input.MouseEventType;
 import dawn.internal.DawnLib;
 import dawn.lib.Rectangle;
 import lombok.Getter;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 
 public final class GuiManagerImpl implements GuiManager {
 
@@ -27,6 +30,7 @@ public final class GuiManagerImpl implements GuiManager {
 	public GuiManagerImpl(final Window window) {
 		this.window = window;
 		window.getInput().addMouseListener(this::handleMouseEvent);
+		window.getInput().addKeyListener(this::handleKeyEvent);
 		EventBus.bus().register(WindowResizedEvent.class, e -> {
 			if (e.pointer() == window.getPointer()) {
 				this.reload();
@@ -50,7 +54,9 @@ public final class GuiManagerImpl implements GuiManager {
 
 	@Override
 	public void closeScreen(final GuiScreen screen) {
-		this.screens.remove(screen);
+		if (this.screens.size() > 1) {
+			this.screens.remove(screen);
+		}
 	}
 
 	private void reload() {
@@ -138,6 +144,43 @@ public final class GuiManagerImpl implements GuiManager {
 			case RELEASE -> receiver.onMouseReleased(button, mouseX, mouseY);
 			case PRESS -> receiver.onMousePressed(button, mouseX, mouseY);
 			case CLICK -> receiver.onMouseClicked(button, mouseX, mouseY);
+		};
+	}
+
+	private void handleKeyEvent(final int keyCode, final KeyEventType eventType, final KeyMods mods) {
+		final List<GuiScreen> screens = this.copyStack();
+		if (eventType == KeyEventType.RELEASE && keyCode == GLFW_KEY_ESCAPE) {
+			final GuiScreen last = screens.getLast();
+			if (last.shouldCloseOnEsc()) {
+				this.closeScreen(last);
+			}
+		}
+		for (int i = screens.size() - 1; i >= 0; --i) {
+			final GuiScreen screen = screens.get(i);
+			if (!this.isInteractionBlocked(screen, i, screens)) {
+				for (final GuiWidget widget : screen.getWidgets()) {
+					if (this.isInteractionBlocked(widget, i, screens)) {
+						continue;
+					}
+					if (this.processKeyEvent(widget, keyCode, eventType, mods).consume(false)) {
+						return;
+					}
+				}
+				if (this.processKeyEvent(screen, keyCode, eventType, mods).consume(false)) {
+					return;
+				}
+			}
+			if (screen.isFullScreen()) {
+				return;
+			}
+		}
+	}
+
+	private EventResult processKeyEvent(final GuiBase receiver, final int keyCode, final KeyEventType eventType, final KeyMods mods) {
+		return switch (eventType) {
+			case RELEASE -> receiver.onKeyReleased(keyCode, mods);
+			case PRESS -> receiver.onKeyPressed(keyCode, mods);
+			case REPEAT -> receiver.onKeyRepeat(keyCode, mods);
 		};
 	}
 

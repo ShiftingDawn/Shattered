@@ -4,6 +4,7 @@ import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.input.EventResult;
 import dawn.input.Input;
+import dawn.input.KeyMods;
 import dawn.lib.Rectangle;
 
 public abstract class GuiBase {
@@ -26,6 +27,18 @@ public abstract class GuiBase {
 	}
 
 	public EventResult onMouseClicked(final int button, final int mouseX, final int mouseY) {
+		return EventResult.DEFAULT;
+	}
+
+	public EventResult onKeyPressed(final int keyCode, final KeyMods mods) {
+		return EventResult.DEFAULT;
+	}
+
+	public EventResult onKeyReleased(final int keyCode, final KeyMods mods) {
+		return EventResult.DEFAULT;
+	}
+
+	public EventResult onKeyRepeat(final int keyCode, final KeyMods mods) {
 		return EventResult.DEFAULT;
 	}
 

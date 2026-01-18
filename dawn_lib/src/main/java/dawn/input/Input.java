@@ -4,6 +4,8 @@ public interface Input {
 
 	void addMouseListener(final MouseEventListener listener);
 
+	void addKeyListener(final KeyEventListener listener);
+
 	boolean isMouseDown(final int button);
 
 	boolean isMouseDownLeft();
@@ -48,5 +50,5 @@ public interface Input {
 
 	boolean hasKeyModAlt(final int keyCode);
 
-	boolean hasKeyModSuper(final int keyCode);
+	boolean hasKeyModMeta(final int keyCode);
 }

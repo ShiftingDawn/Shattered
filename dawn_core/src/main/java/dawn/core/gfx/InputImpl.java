@@ -6,6 +6,9 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import dawn.input.Input;
+import dawn.input.KeyEventListener;
+import dawn.input.KeyEventType;
+import dawn.input.KeyMods;
 import dawn.input.MouseEventListener;
 import dawn.input.MouseEventType;
 import it.unimi.dsi.fastutil.chars.CharArrayFIFOQueue;
@@ -43,6 +46,7 @@ final class InputImpl implements Input {
 	private final int[] keyMods = new int[InputImpl.MAX_KEYS];
 	private final CharPriorityQueue charQueue = CharPriorityQueues.synchronize(new CharArrayFIFOQueue());
 	private final List<MouseEventListener> mouseListeners = new CopyOnWriteArrayList<>();
+	private final List<KeyEventListener> keyListeners = new CopyOnWriteArrayList<>();
 
 	InputImpl(final WindowImpl window) {
 		this.window = window;
@@ -51,6 +55,11 @@ final class InputImpl implements Input {
 	@Override
 	public void addMouseListener(final MouseEventListener listener) {
 		this.mouseListeners.add(listener);
+	}
+
+	@Override
+	public void addKeyListener(final KeyEventListener listener) {
+		this.keyListeners.add(listener);
 	}
 
 	public void handleMousePos(final double x, final double y) {
@@ -192,6 +201,22 @@ final class InputImpl implements Input {
 			this.keyStates.set(key, action != GLFW_RELEASE);
 			this.keyRepeat.set(key, action == GLFW_REPEAT);
 			this.keyMods[key] = action == GLFW_RELEASE ? 0 : mods;
+			this.dispatchKeyEvent(key, action, mods);
+		}
+	}
+
+	private void dispatchKeyEvent(final int keyCode, final int action, final int mods) {
+		final KeyEventType eventType = switch (action) {
+			case GLFW_RELEASE -> KeyEventType.RELEASE;
+			case GLFW_PRESS -> KeyEventType.PRESS;
+			case GLFW_REPEAT -> KeyEventType.REPEAT;
+			default -> null;
+		};
+		if (eventType != null) {
+			final KeyMods keyMods = KeyModsImpl.of(mods);
+			for (final KeyEventListener listener : this.keyListeners) {
+				listener.onKeyEvent(keyCode, eventType, keyMods);
+			}
 		}
 	}
 
@@ -246,7 +271,7 @@ final class InputImpl implements Input {
 	}
 
 	@Override
-	public boolean hasKeyModSuper(final int keyCode) {
+	public boolean hasKeyModMeta(final int keyCode) {
 		return (this.getKeyMods(keyCode) & GLFW_MOD_SUPER) == GLFW_MOD_SUPER;
 	}
 }

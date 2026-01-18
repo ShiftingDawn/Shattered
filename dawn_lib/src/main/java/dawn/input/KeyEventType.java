@@ -1,8 +1,8 @@
 package dawn.input;
 
-public enum MouseEventType {
+public enum KeyEventType {
 
 	RELEASE,
 	PRESS,
-	CLICK
+	REPEAT
 }
