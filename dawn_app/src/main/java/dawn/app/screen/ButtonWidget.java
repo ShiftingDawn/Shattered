@@ -4,7 +4,7 @@ import dawn.gfx.Color;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.gui.GuiWidget;
-import dawn.gui.RenderPhase;
+import dawn.gui.Interactivity;
 import dawn.init.Textures;
 import dawn.input.EventResult;
 import dawn.input.Input;
@@ -25,22 +25,28 @@ public class ButtonWidget extends GuiWidget {
 	}
 
 	@Override
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
 		final int mx = (int) input.getMouseX();
 		final int my = (int) input.getMouseY();
-		switch (phase) {
-			case BACKGROUND -> tessellator.start().set(Textures.GUI_BUTTON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw().end();
-			case INTERACTIVE -> {
-				tessellator.start();
-				if (input.isMouseDownLeft() && this.contains(mx, my)) {
-					tessellator.set(Textures.GUI_BUTTON_PRESSED).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
-				} else if (this.contains(mx, my)) {
-					tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
-				}
-				tessellator.end();
+		tessellator.start();
+		if (interactivity == Interactivity.BLOCKED || !this.contains(mx, my) || !input.isMouseDownLeft()) {
+			tessellator.set(Textures.GUI_BUTTON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+		}
+		if (interactivity == Interactivity.INTERACTIVE && this.contains(mx, my)) {
+			if (input.isMouseDownLeft()) {
+				tessellator.set(Textures.GUI_BUTTON_PRESSED).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+			} else {
+				tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
 			}
 		}
+		tessellator.end();
+	}
+
+	@Override
+	public void renderForeground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
 		if (this.label != null) {
+			final int mx = (int) input.getMouseX();
+			final int my = (int) input.getMouseY();
 			final int fontSize = Math.min(this.getHeight() / 4 * 3, 16);
 			final int w = fontRenderer.getStringWidth(this.label, fontSize);
 			final int h = fontRenderer.getStringHeight(fontSize);

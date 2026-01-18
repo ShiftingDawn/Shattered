@@ -35,6 +35,16 @@ public abstract class GuiScreen extends GuiBase {
 		this.widgets.remove(widget);
 	}
 
+	public final void setPos(final int x, final int y) {
+		this.setX(x);
+		this.setY(y);
+	}
+
+	public final void setSize(final int width, final int height) {
+		this.setWidth(width);
+		this.setHeight(height);
+	}
+
 	protected final void setFullscreen() {
 		this.setWidth(this.getDisplayWidth());
 		this.setHeight(this.getDisplayHeight());

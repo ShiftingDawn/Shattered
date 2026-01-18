@@ -11,10 +11,10 @@ public abstract class GuiBase {
 	public void tick() {
 	}
 
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
 	}
 
-	public void renderForeground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
+	public void renderForeground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
 	}
 
 	public EventResult onMousePressed(final int button, final int mouseX, final int mouseY) {
@@ -46,6 +46,10 @@ public abstract class GuiBase {
 	}
 
 	public boolean isBlockingInteractionBelow() {
+		return true;
+	}
+
+	public boolean shouldCloseOnEsc() {
 		return true;
 	}
 }

@@ -11,8 +11,9 @@ import dawn.gui.GuiBase;
 import dawn.gui.GuiManager;
 import dawn.gui.GuiScreen;
 import dawn.gui.GuiWidget;
-import dawn.gui.RenderPhase;
+import dawn.gui.Interactivity;
 import dawn.input.EventResult;
+import dawn.input.Input;
 import dawn.input.MouseEventType;
 import dawn.internal.DawnLib;
 import dawn.lib.Rectangle;
@@ -89,37 +90,19 @@ public final class GuiManagerImpl implements GuiManager {
 				break;
 			}
 		}
+		final Input input = this.window.getInput();
 		for (int i = renderStartIndex; i < screens.size(); ++i) {
 			final GuiScreen screen = screens.get(i);
-			screen.renderBackground(tessellator, fontRenderer, RenderPhase.BACKGROUND, this.window.getInput());
-			screen.renderBackground(tessellator, fontRenderer, RenderPhase.INTERACTIVE, this.window.getInput());
+			final boolean interactionBlocked = this.isInteractionBlocked(screen, i, screens);
+			screen.renderBackground(tessellator, fontRenderer, interactionBlocked ? Interactivity.BLOCKED : Interactivity.INTERACTIVE, input);
 			for (final GuiWidget widget : screen.getWidgets()) {
-				widget.renderBackground(tessellator, fontRenderer, RenderPhase.BACKGROUND, this.window.getInput());
-				if (!this.isInteractionBlocked(widget, i, screens)) {
-					widget.renderBackground(tessellator, fontRenderer, RenderPhase.INTERACTIVE, this.window.getInput());
-				}
+				widget.renderBackground(tessellator, fontRenderer, this.isInteractionBlocked(widget, i, screens) ? Interactivity.BLOCKED : Interactivity.INTERACTIVE, input);
 			}
-			screen.renderForeground(tessellator, fontRenderer, RenderPhase.BACKGROUND, this.window.getInput());
-			screen.renderForeground(tessellator, fontRenderer, RenderPhase.INTERACTIVE, this.window.getInput());
+			screen.renderForeground(tessellator, fontRenderer, interactionBlocked ? Interactivity.BLOCKED : Interactivity.INTERACTIVE, input);
 			for (final GuiWidget widget : screen.getWidgets()) {
-				widget.renderForeground(tessellator, fontRenderer, RenderPhase.BACKGROUND, this.window.getInput());
-				if (!this.isInteractionBlocked(widget, i, screens)) {
-					widget.renderForeground(tessellator, fontRenderer, RenderPhase.INTERACTIVE, this.window.getInput());
-				}
+				widget.renderForeground(tessellator, fontRenderer, this.isInteractionBlocked(widget, i, screens) ? Interactivity.BLOCKED : Interactivity.INTERACTIVE, input);
 			}
 		}
-	}
-
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted") //It's not
-	private boolean isInteractionBlocked(final GuiBase widget, final int currentScreen, final List<GuiScreen> screenStack) {
-		final Rectangle widgetBounds = widget.getBounds();
-		for (int i = screenStack.size() - 1; i > currentScreen; --i) {
-			final GuiScreen screen = screenStack.get(i);
-			if (screen.isBlockingInteractionBelow() && screen.getBounds().intersects(widgetBounds)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private void handleMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
@@ -128,12 +111,16 @@ public final class GuiManagerImpl implements GuiManager {
 		final int my = (int) mouseY;
 		for (int i = screens.size() - 1; i >= 0; --i) {
 			final GuiScreen screen = screens.get(i);
-			if (screen.contains(mx, my)) {
+			if (screen.contains(mx, my) && !this.isInteractionBlocked(screen, i, screens)) {
 				for (final GuiWidget widget : screen.getWidgets()) {
-					if (widget.contains(mx, my) && !this.isInteractionBlocked(widget, i, screens)) {
-						if (this.processMouseEvent(widget, button, eventType, mx, my).consume(false)) {
-							return;
-						}
+					if (!widget.contains(mx, my)) {
+						continue;
+					}
+					if (this.isInteractionBlocked(widget, i, screens)) {
+						continue;
+					}
+					if (this.processMouseEvent(widget, button, eventType, mx, my).consume(false)) {
+						return;
 					}
 				}
 				if (this.processMouseEvent(screen, button, eventType, mx, my).consume(false)) {
@@ -156,5 +143,29 @@ public final class GuiManagerImpl implements GuiManager {
 
 	private List<GuiScreen> copyStack() {
 		return new ArrayList<>(this.screens);
+	}
+
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted") //It's not
+	private boolean isInteractionBlocked(final GuiWidget widget, final int currentScreen, final List<GuiScreen> screenStack) {
+		final Rectangle widgetBounds = widget.getBounds();
+		for (int i = screenStack.size() - 1; i > currentScreen; --i) {
+			final GuiScreen screen = screenStack.get(i);
+			if (screen.isBlockingInteractionBelow() && screen.getBounds().intersects(widgetBounds)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted") //It's not
+	private boolean isInteractionBlocked(final GuiScreen screen, final int currentScreen, final List<GuiScreen> screenStack) {
+		final Rectangle screenBounds = screen.getBounds();
+		for (int i = screenStack.size() - 1; i > currentScreen; --i) {
+			final GuiScreen otherScreen = screenStack.get(i);
+			if (otherScreen.isBlockingInteractionBelow() && otherScreen.getBounds().contains(screenBounds)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

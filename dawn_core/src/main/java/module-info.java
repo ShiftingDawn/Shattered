@@ -18,6 +18,7 @@ module dawn.core {
 	requires it.unimi.dsi.fastutil;
 	requires com.google.gson;
 	requires org.joml;
+	requires java.desktop;
 
 	opens dawn.core to com.google.gson;
 	opens dawn.core.registry to com.google.gson;

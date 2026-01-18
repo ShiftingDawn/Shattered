@@ -4,7 +4,7 @@ import dawn.app.DawnApp;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.gui.GuiScreen;
-import dawn.gui.RenderPhase;
+import dawn.gui.Interactivity;
 import dawn.init.Textures;
 import dawn.input.Input;
 
@@ -27,10 +27,7 @@ public final class ScreenMainMenu extends GuiScreen {
 	}
 
 	@Override
-	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final RenderPhase phase, final Input input) {
-		if (phase != RenderPhase.BACKGROUND) {
-			return;
-		}
+	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
 		tessellator.start()
 			.set(Textures.ARGON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw()
 			.set(Textures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw()
@@ -43,5 +40,10 @@ public final class ScreenMainMenu extends GuiScreen {
 
 	private void onButtonExit() {
 		DawnApp.get().stop();
+	}
+
+	@Override
+	public boolean shouldCloseOnEsc() {
+		return false;
 	}
 }

@@ -83,4 +83,16 @@ public record Rectangle(int x, int y, int w, int h) {
 	public boolean intersects(final Rectangle other) {
 		return this.x() < other.xMax() && this.xMax() > other.x() && this.y() < other.yMax() && this.yMax() > other.y();
 	}
+
+	public boolean contains(final Point pos) {
+		return pos.x() >= this.x() && pos.x() < this.xMax() && pos.y() >= this.y() && pos.y() < this.yMax();
+	}
+
+	public boolean contains(final Dimension dim) {
+		return dim.w() <= this.w() && dim.h() <= this.h();
+	}
+
+	public boolean contains(final Rectangle other) {
+		return other.x() >= this.x() && other.xMax() < this.xMax() && other.y() >= this.y() && other.yMax() < this.yMax();
+	}
 }
