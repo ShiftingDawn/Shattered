@@ -16,7 +16,13 @@ import dawn.input.EventResult;
 import dawn.input.Input;
 import dawn.input.KeyEventType;
 import dawn.input.KeyMods;
+import dawn.input.KeyPressedEvent;
+import dawn.input.KeyReleasedEvent;
+import dawn.input.KeyRepeatEvent;
+import dawn.input.MouseClickEvent;
 import dawn.input.MouseEventType;
+import dawn.input.MousePressedEvent;
+import dawn.input.MouseReleasedEvent;
 import dawn.internal.DawnLib;
 import dawn.lib.Rectangle;
 import lombok.Getter;
@@ -29,8 +35,12 @@ public final class GuiManagerImpl implements GuiManager {
 
 	public GuiManagerImpl(final Window window) {
 		this.window = window;
-		window.getInput().addMouseListener(this::handleMouseEvent);
-		window.getInput().addKeyListener(this::handleKeyEvent);
+		EventBus.bus().register(MouseReleasedEvent.class, true, this, this::handleMouseReleased);
+		EventBus.bus().register(MousePressedEvent.class, true, this, this::handleMousePressed);
+		EventBus.bus().register(MouseClickEvent.class, true, this, this::handleMouseClicked);
+		EventBus.bus().register(KeyReleasedEvent.class, true, this, this::handleKeyReleased);
+		EventBus.bus().register(KeyPressedEvent.class, true, this, this::handleKeyPressed);
+		EventBus.bus().register(KeyRepeatEvent.class, true, this, this::handleKeyRepeat);
 		EventBus.bus().register(WindowResizedEvent.class, e -> {
 			if (e.pointer() == window.getPointer()) {
 				this.reload();
@@ -41,10 +51,16 @@ public final class GuiManagerImpl implements GuiManager {
 	@Override
 	public void openScreen(final GuiScreen screen) {
 		if (this.screens.contains(screen)) {
-			//Move to top
-			this.screens.remove(screen);
+			this.screens.remove(screen); //Move to top
 			this.screens.addLast(screen);
 			return;
+		}
+		if (!screen.allowMultipleInstances()) {
+			for (final GuiScreen existing : this.screens) {
+				if (existing.getClass() == screen.getClass()) {
+					return;
+				}
+			}
 		}
 		DawnLib.GUI_MANAGER.set(this);
 		screen.getGuiManager(); //Force load the field
@@ -111,6 +127,18 @@ public final class GuiManagerImpl implements GuiManager {
 		}
 	}
 
+	private void handleMouseReleased(final MouseReleasedEvent event) {
+		this.handleMouseEvent(event.getButton(), MouseEventType.RELEASE, event.getXPos(), event.getYPos());
+	}
+
+	private void handleMousePressed(final MousePressedEvent event) {
+		this.handleMouseEvent(event.getButton(), MouseEventType.PRESS, event.getXPos(), event.getYPos());
+	}
+
+	private void handleMouseClicked(final MouseClickEvent event) {
+		this.handleMouseEvent(event.getButton(), MouseEventType.CLICK, event.getXPos(), event.getYPos());
+	}
+
 	private void handleMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
 		final List<GuiScreen> screens = this.copyStack();
 		final int mx = (int) mouseX;
@@ -145,6 +173,18 @@ public final class GuiManagerImpl implements GuiManager {
 			case PRESS -> receiver.onMousePressed(button, mouseX, mouseY);
 			case CLICK -> receiver.onMouseClicked(button, mouseX, mouseY);
 		};
+	}
+
+	private void handleKeyReleased(final KeyReleasedEvent event) {
+		this.handleKeyEvent(event.getKey(), KeyEventType.RELEASE, event.getMods());
+	}
+
+	private void handleKeyPressed(final KeyPressedEvent event) {
+		this.handleKeyEvent(event.getKey(), KeyEventType.PRESS, event.getMods());
+	}
+
+	private void handleKeyRepeat(final KeyRepeatEvent event) {
+		this.handleKeyEvent(event.getKey(), KeyEventType.REPEAT, event.getMods());
 	}
 
 	private void handleKeyEvent(final int keyCode, final KeyEventType eventType, final KeyMods mods) {

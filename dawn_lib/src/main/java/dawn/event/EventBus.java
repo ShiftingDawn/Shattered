@@ -9,7 +9,19 @@ public interface EventBus {
 		return DawnLib.BUS;
 	}
 
-	<T extends Event> SubscriberToken register(final Class<T> eventClass, final Consumer<T> listener);
+	<T extends Event> SubscriberToken register(final Class<T> eventClass, boolean exact, Object owner, final Consumer<T> listener);
+
+	default <T extends Event> SubscriberToken register(final Class<T> eventClass, final Object owner, final Consumer<T> listener) {
+		return this.register(eventClass, false, owner, listener);
+	}
+
+	default <T extends Event> SubscriberToken register(final Class<T> eventClass, final boolean exact, final Consumer<T> listener) {
+		return this.register(eventClass, exact, listener, listener);
+	}
+
+	default <T extends Event> SubscriberToken register(final Class<T> eventClass, final Consumer<T> listener) {
+		return this.register(eventClass, false, listener);
+	}
 
 	void remove(SubscriberToken token);
 

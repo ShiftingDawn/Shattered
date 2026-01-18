@@ -2,10 +2,6 @@ package dawn.input;
 
 public interface Input {
 
-	void addMouseListener(final MouseEventListener listener);
-
-	void addKeyListener(final KeyEventListener listener);
-
 	boolean isMouseDown(final int button);
 
 	boolean isMouseDownLeft();

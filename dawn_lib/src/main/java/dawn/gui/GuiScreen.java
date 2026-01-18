@@ -70,4 +70,8 @@ public abstract class GuiScreen extends GuiBase {
 		//noinspection ConstantValue
 		return this.getGuiManager() != null ? this.getGuiManager().getWindow().getHeight() : 0;
 	}
+
+	public boolean allowMultipleInstances() {
+		return false;
+	}
 }

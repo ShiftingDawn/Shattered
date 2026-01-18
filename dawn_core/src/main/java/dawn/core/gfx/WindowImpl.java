@@ -80,7 +80,7 @@ public final class WindowImpl implements Window, AutoCloseable {
 		this.size[1] = windowHeight;
 		this.closeCallback = closeCallback;
 		this.guiScaleSupplier = guiScaleSupplier;
-		this.optionEventListener = EventBus.bus().register(OptionChangedEvent.class, this::onOptionsChanged);
+		this.optionEventListener = EventBus.bus().register(OptionChangedEvent.class, this, this::onOptionsChanged);
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

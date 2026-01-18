@@ -1,16 +1,17 @@
 package dawn.core.gfx;
 
 import java.util.BitSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import dawn.event.EventBus;
 import dawn.input.Input;
-import dawn.input.KeyEventListener;
-import dawn.input.KeyEventType;
 import dawn.input.KeyMods;
-import dawn.input.MouseEventListener;
-import dawn.input.MouseEventType;
+import dawn.input.KeyPressedEvent;
+import dawn.input.KeyReleasedEvent;
+import dawn.input.KeyRepeatEvent;
+import dawn.input.MouseClickEvent;
+import dawn.input.MousePressedEvent;
+import dawn.input.MouseReleasedEvent;
 import it.unimi.dsi.fastutil.chars.CharArrayFIFOQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueue;
 import it.unimi.dsi.fastutil.chars.CharPriorityQueues;
@@ -45,21 +46,9 @@ final class InputImpl implements Input {
 	private final BitSet keyRepeat = new BitSet(InputImpl.MAX_KEYS);
 	private final int[] keyMods = new int[InputImpl.MAX_KEYS];
 	private final CharPriorityQueue charQueue = CharPriorityQueues.synchronize(new CharArrayFIFOQueue());
-	private final List<MouseEventListener> mouseListeners = new CopyOnWriteArrayList<>();
-	private final List<KeyEventListener> keyListeners = new CopyOnWriteArrayList<>();
 
 	InputImpl(final WindowImpl window) {
 		this.window = window;
-	}
-
-	@Override
-	public void addMouseListener(final MouseEventListener listener) {
-		this.mouseListeners.add(listener);
-	}
-
-	@Override
-	public void addKeyListener(final KeyEventListener listener) {
-		this.keyListeners.add(listener);
 	}
 
 	public void handleMousePos(final double x, final double y) {
@@ -92,16 +81,12 @@ final class InputImpl implements Input {
 			this.mouseButtonPositions[currentIndex] = mx;
 			this.mouseButtonPositions[currentIndex + 1] = my;
 			if (this.isClicked(button, false)) {
-				this.dispatchMouseEvent(button, MouseEventType.CLICK, mx, my);
+				EventBus.bus().post(new MouseClickEvent(button, mx, my));
+			} else if (newPressed) {
+				EventBus.bus().post(new MousePressedEvent(button, mx, my));
 			} else {
-				this.dispatchMouseEvent(button, newPressed ? MouseEventType.PRESS : MouseEventType.RELEASE, mx, my);
+				EventBus.bus().post(new MouseReleasedEvent(button, mx, my));
 			}
-		}
-	}
-
-	private void dispatchMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
-		for (final MouseEventListener listener : this.mouseListeners) {
-			listener.onMouseEvent(button, eventType, mouseX, mouseY);
 		}
 	}
 
@@ -201,22 +186,13 @@ final class InputImpl implements Input {
 			this.keyStates.set(key, action != GLFW_RELEASE);
 			this.keyRepeat.set(key, action == GLFW_REPEAT);
 			this.keyMods[key] = action == GLFW_RELEASE ? 0 : mods;
-			this.dispatchKeyEvent(key, action, mods);
-		}
-	}
-
-	private void dispatchKeyEvent(final int keyCode, final int action, final int mods) {
-		final KeyEventType eventType = switch (action) {
-			case GLFW_RELEASE -> KeyEventType.RELEASE;
-			case GLFW_PRESS -> KeyEventType.PRESS;
-			case GLFW_REPEAT -> KeyEventType.REPEAT;
-			default -> null;
-		};
-		if (eventType != null) {
 			final KeyMods keyMods = KeyModsImpl.of(mods);
-			for (final KeyEventListener listener : this.keyListeners) {
-				listener.onKeyEvent(keyCode, eventType, keyMods);
-			}
+			EventBus.bus().post(switch (action) {
+				case GLFW_RELEASE -> new KeyReleasedEvent(key, keyMods);
+				case GLFW_PRESS -> new KeyPressedEvent(key, keyMods);
+				case GLFW_REPEAT -> new KeyRepeatEvent(key, keyMods);
+				default -> throw new IllegalStateException("Illegal GLFW key event action: " + action);
+			});
 		}
 	}
 
