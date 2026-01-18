@@ -1,16 +1,21 @@
 package dawn.core.gfx;
 
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.IntSupplier;
+import dawn.Dawn;
 import dawn.core.DawnImpl;
 import dawn.core.ExitException;
 import dawn.event.EventBus;
 import dawn.event.SubscriberToken;
+import dawn.gfx.Monitor;
+import dawn.gfx.MonitorVideoMode;
 import dawn.gfx.Window;
 import dawn.lib.RunOnce;
 import dawn.lib.option.OptionChangedEvent;
+import dawn.lib.option.OptionSupplier;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -18,12 +23,18 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.MemoryStack;
+import static dawn.init.Options.ENABLE_VERTICAL_SYNC;
+import static dawn.init.Options.FULLSCREEN;
 import static dawn.init.Options.GUI_SCALE;
 import static org.lwjgl.glfw.GLFW.GLFW_BLUE_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_DONT_CARE;
 import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
 import static org.lwjgl.glfw.GLFW.GLFW_GREEN_BITS;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F10;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F11;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F12;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
@@ -52,6 +63,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowMonitor;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -67,20 +79,21 @@ public final class WindowImpl implements Window, AutoCloseable {
 	private static final RunOnce GLFW_INITIALIZED = new RunOnce();
 	private final @Getter long pointer;
 	private final int[] size = new int[2];
+	private final int[] beforeFullscreen = Dawn.make(new int[2], arr -> Arrays.fill(arr, -1));
 	private final int[] framebufferSize = new int[2];
 	private final int[] logicalSize = new int[2];
 	private final Set<@Nullable Callback> callbacks = new HashSet<>();
 	private final @Getter InputImpl input = new InputImpl(this);
 	private final Runnable closeCallback;
-	private final IntSupplier guiScaleSupplier;
 	private final SubscriberToken optionEventListener;
+	private int guiScale = 0;
 
-	public WindowImpl(final int windowWidth, final int windowHeight, final Runnable closeCallback, final IntSupplier guiScaleSupplier) {
+	public WindowImpl(final int windowWidth, final int windowHeight, final Runnable closeCallback, final OptionSupplier options) {
 		this.size[0] = windowWidth;
 		this.size[1] = windowHeight;
 		this.closeCallback = closeCallback;
-		this.guiScaleSupplier = guiScaleSupplier;
 		this.optionEventListener = EventBus.bus().register(OptionChangedEvent.class, this, this::onOptionsChanged);
+		this.guiScale = options.getGuiScale().getAsInt();
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -89,11 +102,18 @@ public final class WindowImpl implements Window, AutoCloseable {
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		glfwWindowHint(GLFW_SAMPLES, 4);
-		final GLFWVidMode monitorMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		assert monitorMode != null;
-		glfwWindowHint(GLFW_RED_BITS, monitorMode.redBits());
-		glfwWindowHint(GLFW_GREEN_BITS, monitorMode.greenBits());
-		glfwWindowHint(GLFW_BLUE_BITS, monitorMode.blueBits());
+		DawnImpl.LOGGER.info("Discovered monitors:");
+		for (final Monitor monitor : MonitorImpl.list()) {
+			DawnImpl.LOGGER.info(monitor);
+			for (final MonitorVideoMode videoMode : monitor.allModes()) {
+				DawnImpl.LOGGER.info("  > {}", videoMode);
+			}
+		}
+		final Monitor monitor = MonitorImpl.getPrimary();
+		final MonitorVideoMode vidMode = Objects.requireNonNull(monitor.currentMode(), "Could not retrieve monitor configuration");
+		glfwWindowHint(GLFW_RED_BITS, vidMode.redBits());
+		glfwWindowHint(GLFW_GREEN_BITS, vidMode.greenBits());
+		glfwWindowHint(GLFW_BLUE_BITS, vidMode.blueBits());
 		this.pointer = glfwCreateWindow(this.getWindowWidth(), this.getWindowHeight(), DawnImpl.NAME, NULL, NULL);
 		if (this.pointer == NULL) {
 			DawnImpl.LOGGER.fatal("Could not create window");
@@ -102,8 +122,11 @@ public final class WindowImpl implements Window, AutoCloseable {
 		this.reloadFrameBufferSize();
 		this.setupCallbacks();
 		glfwShowWindow(this.pointer);
+		if (options.isFullscreen().getAsBoolean()) {
+			this.setFullscreenState(true);
+		}
 		glfwMakeContextCurrent(this.pointer);
-		glfwSwapInterval(1); //TODO make configurable
+		glfwSwapInterval(options.enableVerticalSync().getAsBoolean() ? 1 : 0);
 		GL.createCapabilities();
 		this.onFrameBufferSizeChanged();
 	}
@@ -159,6 +182,11 @@ public final class WindowImpl implements Window, AutoCloseable {
 
 	private void keyCallback(final long window, final int key, final int scancode, final int action, final int mods) {
 		if (window == this.pointer) {
+			switch (key) {
+				case GLFW_KEY_F10 -> this.setFullscreenState(false);
+				case GLFW_KEY_F11 -> this.setFullscreenState(true);
+				case GLFW_KEY_F12 -> this.setFullscreenState(true);
+			}
 			this.input.handleKeyEvent(key, scancode, action, mods);
 		}
 	}
@@ -191,19 +219,46 @@ public final class WindowImpl implements Window, AutoCloseable {
 	}
 
 	private void onFrameBufferSizeChanged() {
-		this.setScale(this.guiScaleSupplier.getAsInt());
+		this.setScale(this.guiScale);
 		EventBus.bus().post(new WindowResizedEventImpl(this.pointer));
 	}
 
 	private void onOptionsChanged(final OptionChangedEvent event) {
-		if (GUI_SCALE.equals(event.key())) {
-			this.onFrameBufferSizeChanged();
+		switch (event.key()) {
+			case GUI_SCALE -> {
+				this.guiScale = event.options().getGuiScale().getAsInt();
+				this.onFrameBufferSizeChanged();
+			}
+			case ENABLE_VERTICAL_SYNC -> glfwSwapInterval(event.options().enableVerticalSync().getAsBoolean() ? 1 : 0);
+			case FULLSCREEN -> this.setFullscreenState(event.options().isFullscreen().getAsBoolean());
 		}
 	}
 
 	public void update() {
 		glfwSwapBuffers(this.pointer);
 		glfwPollEvents();
+	}
+
+	private void setFullscreenState(final boolean fullscreen) {
+		if (!fullscreen) {
+			if (this.beforeFullscreen[0] == -1) {
+				return;
+			}
+			System.arraycopy(this.beforeFullscreen, 0, this.size, 0, 2);
+			Arrays.fill(this.beforeFullscreen, -1);
+			glfwSetWindowMonitor(this.pointer, NULL, 0, 0, this.size[0], this.size[1], GLFW_DONT_CARE);
+		} else {
+			if (this.beforeFullscreen[0] != -1) {
+				return;
+			}
+			System.arraycopy(this.size, 0, this.beforeFullscreen, 0, 2);
+			final long monitor = glfwGetPrimaryMonitor();
+			final GLFWVidMode vidMode = glfwGetVideoMode(monitor);
+			assert vidMode != null;
+			glfwSetWindowMonitor(this.pointer, monitor, 0, 0, vidMode.width(), vidMode.height(), GLFW_DONT_CARE);
+			this.size[0] = vidMode.width();
+			this.size[1] = vidMode.height();
+		}
 	}
 
 	private void setScale(int scale) {

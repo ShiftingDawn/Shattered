@@ -54,7 +54,7 @@ public final class DawnImpl implements Dawn {
 		this.bootApp.preInit(this);
 		this.resources = new ResourceFinderImpl(this.workspace);
 		WindowImpl.initGlfw();
-		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop, () -> this.bootApp.getOptions().getGuiScale().getAsInt());
+		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop, this.bootApp.getOptions());
 		this.assets = new AssetManagerImpl(this.resources, this.workspace);
 		this.init();
 		this.run();
