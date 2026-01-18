@@ -3,11 +3,14 @@ package dawn.core.gfx;
 import java.nio.IntBuffer;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import dawn.core.DawnImpl;
 import dawn.core.ExitException;
 import dawn.event.EventBus;
+import dawn.event.SubscriberToken;
 import dawn.gfx.Window;
 import dawn.lib.RunOnce;
+import dawn.lib.option.OptionChangedEvent;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -15,6 +18,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.MemoryStack;
+import static dawn.init.Options.GUI_SCALE;
 import static org.lwjgl.glfw.GLFW.GLFW_BLUE_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
@@ -58,8 +62,6 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class WindowImpl implements Window, AutoCloseable {
 
-	//TODO replace with config
-	private static final int PREFERRED_SCALE = 0;
 	private static final int MIN_WIDTH = 320;
 	private static final int MIN_HEIGHT = 240;
 	private static final RunOnce GLFW_INITIALIZED = new RunOnce();
@@ -70,11 +72,15 @@ public final class WindowImpl implements Window, AutoCloseable {
 	private final Set<@Nullable Callback> callbacks = new HashSet<>();
 	private final @Getter InputImpl input = new InputImpl(this);
 	private final Runnable closeCallback;
+	private final IntSupplier guiScaleSupplier;
+	private final SubscriberToken optionEventListener;
 
-	public WindowImpl(final int windowWidth, final int windowHeight, final Runnable closeCallback) {
+	public WindowImpl(final int windowWidth, final int windowHeight, final Runnable closeCallback, final IntSupplier guiScaleSupplier) {
 		this.size[0] = windowWidth;
 		this.size[1] = windowHeight;
 		this.closeCallback = closeCallback;
+		this.guiScaleSupplier = guiScaleSupplier;
+		this.optionEventListener = EventBus.bus().register(OptionChangedEvent.class, this::onOptionsChanged);
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -185,9 +191,14 @@ public final class WindowImpl implements Window, AutoCloseable {
 	}
 
 	private void onFrameBufferSizeChanged() {
-		final int scale = WindowImpl.calculateScale(WindowImpl.PREFERRED_SCALE, this.getFramebufferWidth(), this.getFramebufferHeight());
-		this.setScale(scale);
+		this.setScale(this.guiScaleSupplier.getAsInt());
 		EventBus.bus().post(new WindowResizedEventImpl(this.pointer));
+	}
+
+	private void onOptionsChanged(final OptionChangedEvent event) {
+		if (GUI_SCALE.equals(event.key())) {
+			this.onFrameBufferSizeChanged();
+		}
 	}
 
 	public void update() {
@@ -195,7 +206,8 @@ public final class WindowImpl implements Window, AutoCloseable {
 		glfwPollEvents();
 	}
 
-	public void setScale(final int scale) {
+	private void setScale(int scale) {
+		scale = WindowImpl.calculateScale(scale, this.getFramebufferWidth(), this.getFramebufferHeight());
 		final int scaleX = (int) (this.getFramebufferWidth() / (double) scale);
 		this.logicalSize[0] = this.getFramebufferWidth() / (double) scale > scaleX ? scaleX + 1 : scaleX;
 		final int scaleY = (int) (this.getFramebufferHeight() / (double) scale);
@@ -244,6 +256,7 @@ public final class WindowImpl implements Window, AutoCloseable {
 	@Override
 	public void close() {
 		this.freeCallbacks();
+		this.optionEventListener.unsubscribe();
 		glfwDestroyWindow(this.pointer);
 	}
 

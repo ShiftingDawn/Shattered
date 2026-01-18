@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dawn.Dawn;
 import dawn.core.app.IBootApp;
 import dawn.core.asset.AssetManagerImpl;
+import dawn.core.dawndb.DDBHelperImpl;
 import dawn.core.event.EventBusImpl;
 import dawn.core.gfx.GlStateManagerImpl;
 import dawn.core.gfx.RenderManagerImpl;
@@ -41,7 +42,6 @@ public final class DawnImpl implements Dawn {
 
 	private DawnImpl(final File rootDir, final String[] args, final IBootApp bootApp) {
 		this.bootApp = bootApp;
-		this.bootApp.preInit(this);
 		DawnLib.INSTANCE = this;
 		this.args = new ArgHandler(args);
 		try {
@@ -51,9 +51,10 @@ public final class DawnImpl implements Dawn {
 			throw new ExitException();
 		}
 		this.initLib();
+		this.bootApp.preInit(this);
 		this.resources = new ResourceFinderImpl(this.workspace);
 		WindowImpl.initGlfw();
-		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop);
+		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop, () -> this.bootApp.getOptions().getGuiScale().getAsInt());
 		this.assets = new AssetManagerImpl(this.resources, this.workspace);
 		this.init();
 		this.run();
@@ -66,6 +67,7 @@ public final class DawnImpl implements Dawn {
 		DawnLib.BUS = new EventBusImpl();
 		DawnLib.GL = new GlStateManagerImpl();
 		DawnLib.SHADER_PROPS = new ShaderPropsImpl();
+		DawnLib.DDB_HELPER = new DDBHelperImpl(this.workspace);
 	}
 
 	private void init() {

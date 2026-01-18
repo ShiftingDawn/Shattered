@@ -16,4 +16,6 @@ module dawn.lib {
 	exports dawn.input;
 	exports dawn.asset;
 	exports dawn.gui;
+	exports dawn.dawndb;
+	exports dawn.lib.option;
 }

@@ -22,6 +22,7 @@ public final class DawnLib {
 	public static GlStateManager GL;
 	public static ShaderProps SHADER_PROPS;
 	public static final ThreadLocal<GuiManager> GUI_MANAGER = new ThreadLocal<>();
+	public static DDBHelper DDB_HELPER;
 
 	private DawnLib() {
 	}
