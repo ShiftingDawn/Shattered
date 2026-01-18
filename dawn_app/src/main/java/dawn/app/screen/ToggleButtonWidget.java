@@ -52,7 +52,7 @@ public class ToggleButtonWidget extends GuiWidget {
 			final int fontSize = Math.min(this.getHeight() / 4 * 3, 16);
 			final int w = fontRenderer.getStringWidth(this.label, fontSize);
 			final int h = fontRenderer.getStringHeight(fontSize);
-			final int yOffset = this.getter.getAsBoolean() ? 1 : 0;
+			final int yOffset = this.getter.getAsBoolean() ? 0 : 1;
 			fontRenderer.start().set(this.label).size(fontSize).pos(this.getX() + (this.getWidth() - w) / 2, this.getY() + (this.getHeight() - h) / 2 - 1 - yOffset).write().end();
 		}
 	}
