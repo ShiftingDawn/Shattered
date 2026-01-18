@@ -15,7 +15,7 @@ import static dawn.init.Options.GUI_SCALE;
 public final class Options implements OptionSupplier {
 
 	private final ManagedBoolean fullScreen = this.makeBoolean(FULLSCREEN, false);
-	private final ManagedBoolean vsync = this.makeBoolean(ENABLE_VERTICAL_SYNC, false);
+	private final ManagedBoolean vsync = this.makeBoolean(ENABLE_VERTICAL_SYNC, true);
 	private final ManagedInt guiScale = this.makeInt(GUI_SCALE, 0);
 	private DawnDB db;
 
