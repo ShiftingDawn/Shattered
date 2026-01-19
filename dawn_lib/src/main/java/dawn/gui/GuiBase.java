@@ -50,6 +50,14 @@ public abstract class GuiBase {
 
 	public abstract int getHeight();
 
+	public final int getMaxX() {
+		return this.getX() + this.getWidth();
+	}
+
+	public final int getMaxY() {
+		return this.getY() + this.getHeight();
+	}
+
 	public final Rectangle getBounds() {
 		return new Rectangle(this.getX(), this.getY(), this.getWidth(), this.getHeight());
 	}

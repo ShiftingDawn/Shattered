@@ -1,5 +1,6 @@
 [
-	"shattered:gui/background",
 	"shattered:gui/button",
-	"shattered:gui/button_pressed"
+	"shattered:gui/button_pressed",
+	"shattered:gui/toggle_default",
+	"shattered:gui/toggle_checked"
 ]
