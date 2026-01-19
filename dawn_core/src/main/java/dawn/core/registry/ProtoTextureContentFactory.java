@@ -17,17 +17,19 @@ import dawn.lib.GsonHelper;
 import dawn.lib.Json;
 import dawn.lib.ResourceFinder;
 import dawn.registry.ProtoTexture;
-import dawn.registry.RegistryContentFactory;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
-final class ProtoTextureContentFactory implements RegistryContentFactory<ProtoTexture> {
+final class ProtoTextureContentFactory extends BaseRegistryContentFactory<ProtoTexture> {
 
 	@Override
 	public ProtoTexture make(final Logger logger, final ResourceFinder resources, final Identifier registryKey) {
-		logger.debug("Loading texture definition {}", registryKey);
-		final JsonData textureData = Optional.ofNullable(ProtoTextureContentFactory.loadJsonData(logger, resources, registryKey)).orElseGet(JsonData.Default::new);
+		this.printDescription(logger, "texture", registryKey);
+		JsonData textureData = this.loadJsonData(logger, resources, registryKey).orElse(null);
+		if (textureData == null) {
+			textureData = new JsonData.Default();
+		}
 		return switch (textureData.textureType) {
 			case DEFAULT -> ProtoTextureContentFactory.makeDefault(registryKey, (JsonData.Default) textureData);
 			case STITCHED -> ProtoTextureContentFactory.makeStitched(registryKey, (JsonData.Stitched) textureData);
@@ -58,23 +60,9 @@ final class ProtoTextureContentFactory implements RegistryContentFactory<ProtoTe
 		return new ProtoTextureImpl.AnimationImpl(registryKey, data.fps, data.frameMapping);
 	}
 
-	private static ProtoTextureContentFactory.@Nullable JsonData loadJsonData(final Logger logger, final ResourceFinder assets, final Identifier resource) {
-		final String path = assets.makePath(resource, "texture", "json");
-		try {
-			return ProtoTextureContentFactory.loadJsonDataInternal(assets, path);
-		} catch (final FileNotFoundException ignored) {
-			logger.debug("Could not find metadata for texture \"{}\", assuming defaults. Expected path: {}", resource, path);
-			return null;
-		} catch (final IOException | JsonIOException | JsonSyntaxException e) {
-			logger.error("Could not read texture metadata for texture \"{}\"", resource);
-			logger.error(e);
-			logger.error("\tIgnoring the metadata and loading as a default texture");
-			return null;
-		}
-	}
-
-	private static ProtoTextureContentFactory.@Nullable JsonData loadJsonDataInternal(final ResourceFinder assets, final String path) throws IOException, JsonIOException, JsonSyntaxException {
-		try (InputStream stream = assets.getStream(path)) {
+	private Optional<? extends JsonData> loadJsonData(final Logger logger, final ResourceFinder resources, final Identifier resource) {
+		final String path = resources.makePath(resource, "texture", "json");
+		try (InputStream stream = resources.getStream(path)) {
 			if (stream == null) {
 				throw new FileNotFoundException();
 			}
@@ -87,7 +75,15 @@ final class ProtoTextureContentFactory implements RegistryContentFactory<ProtoTe
 			if (textureType == null) {
 				throw new JsonSyntaxException("Invalid texture type: " + GsonHelper.getString(json.getAsJsonObject(), "type"));
 			}
-			return GsonHelper.deserialize(json, JsonData.getCorrectClass(textureType));
+			return this.loadJsonData(JsonData.getCorrectClass(textureType), logger, resources, resource, "texture", true);
+		} catch (final FileNotFoundException ignored) {
+			logger.debug("Could not find metadata for texture \"{}\", assuming defaults. Expected path: {}", resource, path);
+			return Optional.empty();
+		} catch (final IOException | JsonIOException | JsonSyntaxException e) {
+			logger.error("Could not read texture metadata for texture \"{}\"", resource);
+			logger.error(e);
+			logger.error("\tIgnoring the metadata and loading as a default texture");
+			return Optional.empty();
 		}
 	}
 
