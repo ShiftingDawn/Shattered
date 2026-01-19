@@ -9,6 +9,7 @@ public final class AppTextures {
 	public static final Identifier LOGO = Identifier.of("logo");
 	//GUI
 	public static final Identifier GUI_BACKGROUND = Identifier.of("gui/background");
+	public static final Identifier GUI_BACKGROUND_TITLE = Identifier.of("gui/title_background");
 
 	private AppTextures() {
 	}

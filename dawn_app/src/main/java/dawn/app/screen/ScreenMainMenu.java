@@ -7,13 +7,12 @@ import dawn.app.init.AppTextures;
 import dawn.core.DawnImpl;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
-import dawn.gui.GuiScreen;
 import dawn.gui.Interactivity;
 import dawn.gui.widget.ButtonWidget;
 import dawn.input.Input;
 import dawn.lib.lang.Text;
 
-public final class ScreenMainMenu extends GuiScreen {
+public final class ScreenMainMenu extends FullscreenWindow {
 
 	private static final Identifier SCREEN_ID = Identifier.of("main_menu");
 	private final ButtonWidget buttonOptions = this.add(new ButtonWidget(Text.localize(Dawn.makeKey(ScreenMainMenu.SCREEN_ID, "screen", "options")), this::onButtonOptions));
@@ -25,16 +24,9 @@ public final class ScreenMainMenu extends GuiScreen {
 	}
 
 	@Override
-	public void init() {
-		this.setFullscreen();
-		super.init();
-	}
-
-	@Override
 	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
-		tessellator
-			.render(AppTextures.ARGON, t -> t.pos(this.getBounds()))
-			.start().set(AppTextures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw().end();
+		super.renderBackground(tessellator, fontRenderer, interactivity, input);
+		tessellator.start().set(AppTextures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw().end();
 	}
 
 	private void onButtonOptions() {

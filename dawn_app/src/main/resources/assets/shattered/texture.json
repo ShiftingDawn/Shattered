@@ -1,5 +1,6 @@
 [
 	"shattered:logo",
 	"shattered:argon",
-	"shattered:gui/background"
+	"shattered:gui/background",
+	"shattered:gui/title_background"
 ]
