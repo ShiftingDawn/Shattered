@@ -1,4 +1,4 @@
-package dawn.lib;
+package dawn.lib.lang;
 
 import dawn.Dawn;
 import dawn.Identifier;
@@ -21,7 +21,7 @@ public interface Localizer {
 		return String.format(this.localize(id, type), format);
 	}
 
-	void setActiveLanguage(String languageKey);
+	void setActiveLanguage(Identifier languageKey);
 
-	String getActiveLanguage();
+	Identifier getActiveLanguage();
 }

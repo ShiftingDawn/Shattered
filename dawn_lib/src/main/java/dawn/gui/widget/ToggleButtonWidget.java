@@ -10,6 +10,7 @@ import dawn.init.Textures;
 import dawn.input.EventResult;
 import dawn.input.Input;
 import dawn.lib.BooleanConsumer;
+import dawn.lib.lang.Text;
 import dawn.lib.option.ManagedBoolean;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,15 +20,23 @@ public class ToggleButtonWidget extends GuiWidget {
 
 	@Getter
 	@Setter
-	private @Nullable String label;
+	private @Nullable Text label;
 	private final BooleanSupplier getter;
 	private final BooleanConsumer setter;
 
-	public ToggleButtonWidget(@Nullable final String label, final BooleanSupplier getter, final BooleanConsumer setter) {
+	public ToggleButtonWidget(@Nullable final Text label, final BooleanSupplier getter, final BooleanConsumer setter) {
 		this.label = label;
 		this.getter = getter;
 		this.setter = setter;
 		this.setSize(240, 16);
+	}
+
+	public ToggleButtonWidget(@Nullable final String label, final BooleanSupplier getter, final BooleanConsumer setter) {
+		this(label != null ? Text.literal(label) : null, getter, setter);
+	}
+
+	public ToggleButtonWidget(@Nullable final Text label, final ManagedBoolean state) {
+		this(label, state, state);
 	}
 
 	public ToggleButtonWidget(@Nullable final String label, final ManagedBoolean state) {

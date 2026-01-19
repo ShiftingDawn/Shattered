@@ -3,7 +3,9 @@ package dawn.core.lib;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import dawn.lib.Localizer;
+import dawn.Identifier;
+import dawn.init.Languages;
+import dawn.lib.lang.Localizer;
 import dawn.registry.ProtoLanguage;
 import dawn.registry.Registries;
 import lombok.Getter;
@@ -12,7 +14,7 @@ import static dawn.core.DawnImpl.LOGGER;
 public final class LocalizerImpl implements Localizer {
 
 	private final Map<String, String> entries = new ConcurrentHashMap<>();
-	private @Getter String activeLanguage = Localizer.DEFAULT_LANGUAGE;
+	private @Getter Identifier activeLanguage = Languages.EN_US;
 
 	public void init() {
 		LOGGER.info("Reloading localizer");
@@ -24,11 +26,11 @@ public final class LocalizerImpl implements Localizer {
 			}
 		}
 		//Override with active language entries
-		if (!Localizer.DEFAULT_LANGUAGE.equals(this.activeLanguage)) {
+		if (!Localizer.DEFAULT_LANGUAGE.equals(this.activeLanguage.getPath())) {
 			LOGGER.debug("    Loaded {} fallback entries", this.entries.size());
 			int activeEntries = 0;
 			for (final ProtoLanguage language : Registries.get().languages()) {
-				if (this.activeLanguage.equals(language.getRegistryKey().getPath())) {
+				if (this.activeLanguage.getPath().equals(language.getRegistryKey().getPath())) {
 					this.entries.putAll(language.getEntries());
 					activeEntries += language.getEntries().size();
 				}
@@ -45,9 +47,9 @@ public final class LocalizerImpl implements Localizer {
 	}
 
 	@Override
-	public void setActiveLanguage(final String activeLanguage) {
-		if (!this.activeLanguage.equals(activeLanguage.trim())) {
-			this.activeLanguage = activeLanguage.trim();
+	public void setActiveLanguage(final Identifier activeLanguage) {
+		if (!this.activeLanguage.getPath().equals(activeLanguage.getPath())) {
+			this.activeLanguage = activeLanguage;
 			this.init();
 		}
 	}

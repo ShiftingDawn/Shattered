@@ -10,6 +10,7 @@ import dawn.gfx.FontRenderer;
 import dawn.gfx.GlStateManager;
 import dawn.gfx.ShaderProps;
 import dawn.init.Fonts;
+import dawn.lib.lang.Text;
 import dawn.registry.ProtoShader;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
@@ -25,7 +26,7 @@ final class FontRendererImpl implements FontRenderer {
 	private final Vector2i position = new Vector2i(0, 0);
 	private int fontSize = Font.SIZE;
 	private Color color = Color.WHITE;
-	private @Nullable String txt;
+	private @Nullable Text txt;
 
 	public FontRendererImpl(final Dawn dawn, final Function<Identifier, Font> fontGetter) {
 		this.dawn = dawn;
@@ -56,7 +57,7 @@ final class FontRendererImpl implements FontRenderer {
 	}
 
 	@Override
-	public FontRenderer set(final String text, final Color tint) {
+	public FontRenderer set(final Text text, final Color tint) {
 		this.testWriting();
 		this.txt = text;
 		this.color = tint;
@@ -64,7 +65,7 @@ final class FontRendererImpl implements FontRenderer {
 	}
 
 	@Override
-	public FontRenderer set(final String text) {
+	public FontRenderer set(final Text text) {
 		return this.set(text, Color.WHITE);
 	}
 
@@ -109,10 +110,14 @@ final class FontRendererImpl implements FontRenderer {
 		if (!proto.isCanTexture()) {
 			throw new IllegalStateException("The currently bound shader '%s' does not support rendering textures (needed for font)".formatted(proto.getRegistryKey()));
 		}
+		if (call.txt().isEmpty()) {
+			return;
+		}
 		final float scale = FontRenderer.getFontScale(call.font, call.size);
 		float penX = call.x();
 		final float penY = call.y() + FontRenderer.getStringHeight(call.font, call.size);
-		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, call.txt().length() * 6, GL_TRIANGLE_STRIP, () -> {
+		final String str = call.txt().getString();
+		final BufferBuilder builder = new BufferBuilder(VertexFormats.FORMAT_TEXTURE, str.length() * 6, GL_TRIANGLE_STRIP, () -> {
 			GlStateManager.gl().bindShader(shader.getProgram());
 			GlStateManager.gl().blendSimple();
 			GlStateManager.gl().bindTexture(call.font().getTexture().id());
@@ -120,8 +125,8 @@ final class FontRendererImpl implements FontRenderer {
 			ShaderProps.get().setUniform4(ShaderProps.get().getNamedLocation(shader, proto.getPropMatrixTessellatorTransform()), false, new Matrix4f());
 			GlStateManager.gl().textureFilterSmooth();
 		});
-		for (int i = 0; i < call.txt().length(); ++i) {
-			final char c = call.txt().charAt(i);
+		for (int i = 0; i < str.length(); ++i) {
+			final char c = str.charAt(i);
 			final Font.Glyph glyph = call.font().get(c);
 			if (glyph == null) {
 				continue;
@@ -139,7 +144,7 @@ final class FontRendererImpl implements FontRenderer {
 			builder.position(x0, y1).color(call.color()).uv(uvs[0], uvs[3]).endVertex();
 			builder.position(x1, y0).color(call.color()).uv(uvs[2], uvs[1]).endVertex();
 			builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
-			if (i < call.txt().length() - 1) {
+			if (i < str.length() - 1) {
 				//Connect to next char so we can write the whole string in 1 call
 				builder.position(x1, y1).color(call.color()).uv(uvs[2], uvs[3]).endVertex();
 			}
@@ -154,7 +159,7 @@ final class FontRendererImpl implements FontRenderer {
 	}
 
 	@Override
-	public int getStringWidth(final String str, final int fontSize) {
+	public int getStringWidth(final Text str, final int fontSize) {
 		return FontRenderer.getStringWidth(this.getFont(), str, fontSize);
 	}
 
@@ -163,6 +168,6 @@ final class FontRendererImpl implements FontRenderer {
 		return FontRenderer.getStringHeight(this.getFont(), fontSize);
 	}
 
-	private record WriteCall(String txt, int size, int x, int y, Font font, Color color) {
+	private record WriteCall(Text txt, int size, int x, int y, Font font, Color color) {
 	}
 }

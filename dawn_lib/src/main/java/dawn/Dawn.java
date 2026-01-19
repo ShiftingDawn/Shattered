@@ -7,9 +7,9 @@ import dawn.gfx.RenderManager;
 import dawn.gfx.Window;
 import dawn.gui.GuiManager;
 import dawn.internal.DawnLib;
-import dawn.lib.Localizer;
 import dawn.lib.ResourceFinder;
 import dawn.lib.ThrowingSupplier;
+import dawn.lib.lang.Localizer;
 import org.jspecify.annotations.Nullable;
 
 public interface Dawn {

@@ -8,6 +8,7 @@ import dawn.gui.Interactivity;
 import dawn.init.Textures;
 import dawn.input.EventResult;
 import dawn.input.Input;
+import dawn.lib.lang.Text;
 import lombok.Getter;
 import lombok.Setter;
 import org.jspecify.annotations.Nullable;
@@ -16,13 +17,17 @@ public class ButtonWidget extends GuiWidget {
 
 	@Getter
 	@Setter
-	private @Nullable String label;
+	private @Nullable Text label;
 	private final Runnable callback;
 
-	public ButtonWidget(@Nullable final String label, final Runnable callback) {
+	public ButtonWidget(@Nullable final Text label, final Runnable callback) {
 		this.label = label;
 		this.callback = callback;
 		this.setSize(240, 24);
+	}
+
+	public ButtonWidget(@Nullable final String label, final Runnable callback) {
+		this(label != null ? Text.literal(label) : null, callback);
 	}
 
 	@Override

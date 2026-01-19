@@ -1,14 +1,23 @@
 package dawn.gfx;
 
 import dawn.asset.Font;
+import dawn.lib.lang.Text;
 
 public interface FontRenderer {
 
 	FontRenderer start();
 
-	FontRenderer set(String text, Color tint);
+	FontRenderer set(Text text, Color tint);
 
-	FontRenderer set(String text);
+	FontRenderer set(Text text);
+
+	default FontRenderer set(final String text, final Color tint) {
+		return this.set(Text.literal(text), tint);
+	}
+
+	default FontRenderer set(final String text) {
+		return this.set(Text.literal(text));
+	}
 
 	FontRenderer size(int size);
 
@@ -20,13 +29,17 @@ public interface FontRenderer {
 
 	void end();
 
-	int getStringWidth(String str, int fontSize);
+	int getStringWidth(Text text, int fontSize);
+
+	default int getStringWidth(final String str, final int fontSize) {
+		return this.getStringWidth(Text.literal(str), fontSize);
+	}
 
 	int getStringHeight(int fontSize);
 
-	static int getStringWidth(final Font font, final String str, final int fontSize) {
+	static int getStringWidth(final Font font, final Text text, final int fontSize) {
 		float value = 0;
-		for (final char c : str.toCharArray()) {
+		for (final char c : text.getString().toCharArray()) {
 			final Font.Glyph glyph = font.get(c);
 			if (glyph != null) {
 				value += glyph.advance();
@@ -36,6 +49,10 @@ public interface FontRenderer {
 			return (int) value;
 		}
 		return (int) (value * FontRenderer.getFontScale(font, fontSize));
+	}
+
+	static int getStringWidth(final Font font, final String str, final int fontSize) {
+		return FontRenderer.getStringWidth(font, Text.literal(str), fontSize);
 	}
 
 	static int getStringHeight(final Font font, final int fontSize) {
