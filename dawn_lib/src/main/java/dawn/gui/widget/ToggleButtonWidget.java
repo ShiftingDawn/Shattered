@@ -51,7 +51,7 @@ public class ToggleButtonWidget extends GuiWidget {
 			.set(this.getter.getAsBoolean() ? Textures.GUI_TOGGLE_CHECKED : Textures.GUI_TOGGLE_DEFAULT)
 			.pos(this.getX(), this.getY()).centerY(this.getHeight()).draw();
 		if (interactivity == Interactivity.INTERACTIVE && this.contains(mx, my)) {
-			tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+			tessellator.render(Color.WHITE.withAlpha(.1f), t -> t.pos(this.getBounds()));
 		}
 		tessellator.end();
 	}

@@ -32,10 +32,9 @@ public final class ScreenMainMenu extends GuiScreen {
 
 	@Override
 	public void renderBackground(final Tessellator tessellator, final FontRenderer fontRenderer, final Interactivity interactivity, final Input input) {
-		tessellator.start()
-			.set(AppTextures.ARGON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw()
-			.set(AppTextures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw()
-			.end();
+		tessellator
+			.render(AppTextures.ARGON, t -> t.pos(this.getBounds()))
+			.start().set(AppTextures.LOGO).pos(this.getX(), this.getY() + 10).centerX(this.getWidth()).draw().end();
 	}
 
 	private void onButtonOptions() {

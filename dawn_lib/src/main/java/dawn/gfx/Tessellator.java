@@ -6,6 +6,7 @@ import dawn.asset.Shader;
 import dawn.asset.Texture;
 import dawn.lib.Dimension;
 import dawn.lib.Point;
+import dawn.lib.Rectangle;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
@@ -30,6 +31,8 @@ public interface Tessellator {
 	Tessellator set(Identifier texture);
 
 	Tessellator set(Color color);
+
+	Tessellator pos(Rectangle pos);
 
 	Tessellator pos(int x, int y, int width, int height);
 
@@ -78,4 +81,14 @@ public interface Tessellator {
 	Tessellator draw();
 
 	void end();
+
+	Tessellator render(final Texture texture, final Color tint, Consumer<QuickDraw> propSetter);
+
+	Tessellator render(final Texture texture, Consumer<QuickDraw> propSetter);
+
+	Tessellator render(final Identifier texture, final Color tint, Consumer<QuickDraw> propSetter);
+
+	Tessellator render(final Identifier texture, Consumer<QuickDraw> propSetter);
+
+	Tessellator render(Color color, Consumer<QuickDraw> propSetter);
 }

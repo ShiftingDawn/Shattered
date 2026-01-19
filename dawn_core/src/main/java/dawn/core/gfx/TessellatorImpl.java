@@ -10,10 +10,12 @@ import dawn.asset.Shader;
 import dawn.asset.Texture;
 import dawn.gfx.Color;
 import dawn.gfx.GlStateManager;
+import dawn.gfx.QuickDraw;
 import dawn.gfx.ShaderProps;
 import dawn.gfx.Tessellator;
 import dawn.lib.Dimension;
 import dawn.lib.Point;
+import dawn.lib.Rectangle;
 import dawn.registry.ProtoShader;
 import dawn.registry.ProtoTexture;
 import org.joml.Matrix4f;
@@ -124,6 +126,13 @@ final class TessellatorImpl implements Tessellator {
 		this.testDrawing();
 		this.color(color);
 		this.size(100, 100);
+		return this;
+	}
+
+	@Override
+	public Tessellator pos(final Rectangle pos) {
+		this.pos(pos.pos());
+		this.size(pos.size());
 		return this;
 	}
 
@@ -364,5 +373,44 @@ final class TessellatorImpl implements Tessellator {
 		float[] bounding, float[] uv,
 		Color[] color, @Nullable Texture texture
 	) {
+	}
+
+	private Tessellator quickDraw(final Runnable selfSetter, final Consumer<QuickDraw> propSetter) {
+		final boolean alreadyDrawing = this.drawing;
+		if (!alreadyDrawing) {
+			this.start();
+		}
+		selfSetter.run();
+		propSetter.accept(new TessellatorQuickDrawImpl(this));
+		this.draw();
+		if (!alreadyDrawing) {
+			this.end();
+		}
+		return this;
+	}
+
+	@Override
+	public Tessellator render(final Texture texture, final Color tint, final Consumer<QuickDraw> propSetter) {
+		return this.quickDraw(() -> this.set(texture, tint), propSetter);
+	}
+
+	@Override
+	public Tessellator render(final Texture texture, final Consumer<QuickDraw> propSetter) {
+		return this.quickDraw(() -> this.set(texture), propSetter);
+	}
+
+	@Override
+	public Tessellator render(final Identifier texture, final Color tint, final Consumer<QuickDraw> propSetter) {
+		return this.quickDraw(() -> this.set(texture, tint), propSetter);
+	}
+
+	@Override
+	public Tessellator render(final Identifier texture, final Consumer<QuickDraw> propSetter) {
+		return this.quickDraw(() -> this.set(texture), propSetter);
+	}
+
+	@Override
+	public Tessellator render(final Color color, final Consumer<QuickDraw> propSetter) {
+		return this.quickDraw(() -> this.set(color), propSetter);
 	}
 }

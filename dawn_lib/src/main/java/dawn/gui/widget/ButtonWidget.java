@@ -36,13 +36,13 @@ public class ButtonWidget extends GuiWidget {
 		final int my = (int) input.getMouseY();
 		tessellator.start();
 		if (interactivity == Interactivity.BLOCKED || !this.contains(mx, my) || !input.isMouseDownLeft()) {
-			tessellator.set(Textures.GUI_BUTTON).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+			tessellator.render(Textures.GUI_BUTTON, t -> t.pos(this.getBounds()));
 		}
 		if (interactivity == Interactivity.INTERACTIVE && this.contains(mx, my)) {
 			if (input.isMouseDownLeft()) {
-				tessellator.set(Textures.GUI_BUTTON_PRESSED).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+				tessellator.render(Textures.GUI_BUTTON_PRESSED, t -> t.pos(this.getBounds()));
 			} else {
-				tessellator.set(Color.WHITE.withAlpha(.1f)).pos(this.getX(), this.getY(), this.getWidth(), this.getHeight()).draw();
+				tessellator.render(Color.WHITE.withAlpha(.1f), t -> t.pos(this.getBounds()));
 			}
 		}
 		tessellator.end();
