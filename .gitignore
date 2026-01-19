@@ -4,6 +4,7 @@ build
 
 ### Java ###
 hs_err_*.log
+replay_pid*.log
 
 ### Intellij ###
 .idea/**/workspace.xml
@@ -27,6 +28,8 @@ hs_err_*.log
 .idea/*.iml
 .idea/modules
 .idea/misc.xml
+.idea/gradle.xml
+.idea/hotswap_agent.xml
 *.iml
 *.ipr
 .idea/httpRequests

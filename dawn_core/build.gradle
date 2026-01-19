@@ -29,6 +29,7 @@ application {
 	mainClass = "dawn.core.Main"
 
 	applicationDefaultJvmArgs = [
+		"-XX:+AllowEnhancedClassRedefinition",
 		"--enable-native-access=ALL-UNNAMED",
 		"-Ddawn.workspace.root=$rootDir/run",
 		"-Ddawn.log.level=TRACE",
