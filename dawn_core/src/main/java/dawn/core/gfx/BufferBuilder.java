@@ -14,36 +14,16 @@ final class BufferBuilder {
 	private final VertexFormat format;
 	private final int drawMode;
 	private final VertexArrayObject vao;
-	private final int size;
 	private final Runnable callback;
-	private ByteBuffer buffer;
+	private final ByteBuffer buffer;
 	private int vertices = 0;
 
-	public BufferBuilder(final VertexFormat format, final int size, final int drawMode, final Runnable callback) {
+	public BufferBuilder(final VertexFormat format, final int count, final int drawMode, final Runnable callback) {
 		this.format = format;
-		this.buffer = MemoryUtil.memAlloc(format.size * size);
+		this.buffer = MemoryUtil.memAlloc(format.size * count);
 		this.drawMode = drawMode;
 		this.vao = VertexArrayObject.getInstance();
-		this.size = size;
 		this.callback = callback;
-	}
-
-	public BufferBuilder(final VertexFormat format, final int drawMode, final Runnable callback) {
-		this(format, 1, drawMode, callback);
-	}
-
-	private void grow() {
-		if (this.buffer.remaining() > this.format.size) {
-			return;
-		}
-		final int position = this.buffer.position();
-		final ByteBuffer newBuffer = MemoryUtil.memAlloc(this.buffer.capacity() + this.format.size * this.size);
-		this.buffer.position(0);
-		newBuffer.put(this.buffer);
-		newBuffer.rewind();
-		newBuffer.position(position);
-		MemoryUtil.memFree(this.buffer);
-		this.buffer = newBuffer;
 	}
 
 	public BufferBuilder position(final float x, final float y) {
@@ -77,7 +57,6 @@ final class BufferBuilder {
 
 	public void endVertex() {
 		++this.vertices;
-		this.grow();
 	}
 
 	public void draw() {
