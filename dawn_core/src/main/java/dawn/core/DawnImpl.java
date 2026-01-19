@@ -15,6 +15,7 @@ import dawn.core.gfx.ShaderPropsImpl;
 import dawn.core.gfx.WindowImpl;
 import dawn.core.gui.GuiManagerImpl;
 import dawn.core.lib.ArgHandler;
+import dawn.core.lib.LocalizerImpl;
 import dawn.core.lib.json.GsonFactory;
 import dawn.core.registry.RegistriesImpl;
 import dawn.internal.DawnLib;
@@ -36,6 +37,7 @@ public final class DawnImpl implements Dawn {
 	private final @Getter ResourceFinder resources;
 	private final @Getter WindowImpl window;
 	private final @Getter AssetManagerImpl assets;
+	private final @Getter LocalizerImpl localizer;
 	private final IBootApp bootApp;
 	private @Getter RenderManagerImpl renderManager;
 	private @Getter GuiManagerImpl guiManager;
@@ -56,6 +58,7 @@ public final class DawnImpl implements Dawn {
 		WindowImpl.initGlfw();
 		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop, this.bootApp.getOptions());
 		this.assets = new AssetManagerImpl(this.resources, this.workspace);
+		this.localizer = new LocalizerImpl();
 		this.init();
 		this.run();
 	}
@@ -73,6 +76,7 @@ public final class DawnImpl implements Dawn {
 	private void init() {
 		RegistriesImpl.load(this.resources);
 		this.assets.init();
+		this.localizer.init();
 		this.renderManager = new RenderManagerImpl(this, this.assets);
 		this.guiManager = new GuiManagerImpl(this.window);
 		this.bootApp.init();

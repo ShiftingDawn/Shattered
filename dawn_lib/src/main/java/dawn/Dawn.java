@@ -7,6 +7,7 @@ import dawn.gfx.RenderManager;
 import dawn.gfx.Window;
 import dawn.gui.GuiManager;
 import dawn.internal.DawnLib;
+import dawn.lib.Localizer;
 import dawn.lib.ResourceFinder;
 import dawn.lib.ThrowingSupplier;
 import org.jspecify.annotations.Nullable;
@@ -22,6 +23,8 @@ public interface Dawn {
 	ResourceFinder getResources();
 
 	AssetManager getAssets();
+
+	Localizer getLocalizer();
 
 	//TODO move to window?
 	RenderManager getRenderManager();
@@ -44,5 +47,17 @@ public interface Dawn {
 		} catch (final Throwable ignored) {
 			return fallback.get();
 		}
+	}
+
+	static String makeKey(final Identifier id, final String type, @Nullable final String suffix) {
+		String result = type + '.' + id.toString().replace(Identifier.DOMAIN_SEPARATOR_CHAR, '.').replace('/', '.');
+		if (suffix != null) {
+			result = result + '.' + suffix;
+		}
+		return result;
+	}
+
+	static String makeKey(final Identifier id, final String type) {
+		return Dawn.makeKey(id, type, null);
 	}
 }

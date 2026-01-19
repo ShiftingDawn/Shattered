@@ -1,5 +1,7 @@
 package dawn.app.screen;
 
+import dawn.Dawn;
+import dawn.Identifier;
 import dawn.app.DawnApp;
 import dawn.app.init.AppTextures;
 import dawn.gfx.FontRenderer;
@@ -11,8 +13,9 @@ import dawn.input.Input;
 
 public final class ScreenMainMenu extends GuiScreen {
 
-	private final ButtonWidget buttonOptions = this.add(new ButtonWidget("Options", this::onButtonOptions));
-	private final ButtonWidget buttonExit = this.add(new ButtonWidget("Exit", this::onButtonExit));
+	private static final Identifier SCREEN_ID = Identifier.of("main_menu");
+	private final ButtonWidget buttonOptions = this.add(new ButtonWidget(Dawn.makeKey(ScreenMainMenu.SCREEN_ID, "screen", "options"), this::onButtonOptions));
+	private final ButtonWidget buttonExit = this.add(new ButtonWidget(Dawn.makeKey(ScreenMainMenu.SCREEN_ID, "screen", "exit"), this::onButtonExit));
 
 	public ScreenMainMenu() {
 		this.buttonExit.setPos(() -> this.getX() + this.getWidth() / 2 - 120, () -> this.getY() + this.getHeight() - 24 - 10);

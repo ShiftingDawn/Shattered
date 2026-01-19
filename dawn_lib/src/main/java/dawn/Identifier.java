@@ -7,7 +7,8 @@ import org.jspecify.annotations.Nullable;
 
 public final class Identifier {
 
-	private static final String DOMAIN_SEPARATOR = ":";
+	public static final char DOMAIN_SEPARATOR_CHAR = ':';
+	public static final String DOMAIN_SEPARATOR = String.valueOf(Identifier.DOMAIN_SEPARATOR_CHAR);
 	public static final String DEFAULT_DOMAIN = DawnLib.IDENTIFIER_DEFAULT_DOMAIN;
 	private final @Getter String domain;
 	private final @Getter String path;

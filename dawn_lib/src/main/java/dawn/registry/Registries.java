@@ -13,4 +13,6 @@ public interface Registries {
 	Registry<ProtoTexture> textures();
 
 	Registry<ProtoFont> fonts();
+
+	Registry<ProtoLanguage> languages();
 }
