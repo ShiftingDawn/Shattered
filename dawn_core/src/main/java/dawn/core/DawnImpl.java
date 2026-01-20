@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dawn.Dawn;
 import dawn.core.app.IBootApp;
 import dawn.core.asset.AssetManagerImpl;
+import dawn.core.audio.AudioCategory;
+import dawn.core.audio.SoundSystem;
 import dawn.core.dawndb.DDBHelperImpl;
 import dawn.core.event.EventBusImpl;
 import dawn.core.gfx.GlStateManagerImpl;
@@ -32,10 +34,12 @@ public final class DawnImpl implements Dawn {
 	public static final Logger LOGGER = LogManager.getLogger(DawnImpl.NAME);
 	private static final int TICKS_PER_SECOND = Integer.getInteger(DawnImpl.NAME_LOW + ".runtime.tickrate", 20);
 	private final AtomicBoolean running = new AtomicBoolean(true);
+	private final Bootscreen bootscreen;
 	private final @Getter ArgHandler args;
 	private final @Getter Workspace workspace;
 	private final @Getter ResourceFinder resources;
 	private final @Getter WindowImpl window;
+	private final @Getter SoundSystem soundSystem;
 	private final @Getter AssetManagerImpl assets;
 	private final @Getter LocalizerImpl localizer;
 	private final IBootApp bootApp;
@@ -58,8 +62,11 @@ public final class DawnImpl implements Dawn {
 		WindowImpl.initGlfw();
 		this.window = new WindowImpl(this.args.displayWidth, this.args.displayHeight, this::stop, this.bootApp.getOptions());
 		this.assets = new AssetManagerImpl(this.resources, this.workspace);
+		this.soundSystem = new SoundSystem(this.assets);
 		this.localizer = new LocalizerImpl();
 		this.init();
+		this.bootscreen = new Bootscreen(bootApp.getOptions(), this.window, this.soundSystem, this.guiManager);
+		this.bootscreen.init();
 		this.run();
 	}
 
@@ -78,7 +85,7 @@ public final class DawnImpl implements Dawn {
 		this.assets.init();
 		this.localizer.init();
 		this.renderManager = new RenderManagerImpl(this, this.assets);
-		this.guiManager = new GuiManagerImpl(this.window);
+		this.guiManager = new GuiManagerImpl(this.window, this.soundSystem.getChannel(AudioCategory.UI));
 		this.bootApp.init();
 	}
 
@@ -90,11 +97,12 @@ public final class DawnImpl implements Dawn {
 			long delta = currentTime - lastTickTime;
 			while (delta >= millisPerTick) {
 				delta -= millisPerTick;
-				this.guiManager.tick();
 			}
 			this.renderManager.render();
+			this.bootscreen.render(this.renderManager.getTessellator());
 			this.window.update();
 		}
+		this.soundSystem.close();
 		this.window.close();
 		WindowImpl.destroyGlfw();
 	}

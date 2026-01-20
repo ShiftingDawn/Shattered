@@ -6,6 +6,7 @@ import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
 import dawn.gui.GuiWidget;
 import dawn.gui.Interactivity;
+import dawn.init.Sounds;
 import dawn.init.Textures;
 import dawn.input.EventResult;
 import dawn.input.Input;
@@ -70,6 +71,7 @@ public class ToggleButtonWidget extends GuiWidget {
 
 	@Override
 	public EventResult onMouseClicked(final int button, final int mouseX, final int mouseY) {
+		this.getScreen().getGuiManager().playAudio(Sounds.BUTTON_CLICK);
 		final boolean current = this.getter.getAsBoolean();
 		this.setter.accept(!current);
 		return EventResult.CONSUME;

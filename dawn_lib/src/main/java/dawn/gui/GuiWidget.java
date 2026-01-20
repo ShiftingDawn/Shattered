@@ -1,6 +1,9 @@
 package dawn.gui;
 
 import java.util.function.IntSupplier;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 public abstract class GuiWidget extends GuiBase {
 
@@ -8,6 +11,8 @@ public abstract class GuiWidget extends GuiBase {
 	private IntSupplier y = () -> 0;
 	private IntSupplier width = () -> 176;
 	private IntSupplier height = () -> 166;
+	@Setter(AccessLevel.PACKAGE)
+	private @Getter GuiScreen screen;
 
 	public void init(final GuiScreen screen) {
 	}

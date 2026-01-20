@@ -14,5 +14,7 @@ public interface Registries {
 
 	Registry<ProtoFont> fonts();
 
+	Registry<ProtoAudio> audio();
+
 	Registry<ProtoLanguage> languages();
 }

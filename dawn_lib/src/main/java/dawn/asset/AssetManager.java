@@ -11,4 +11,6 @@ public interface AssetManager {
 	ProtoAssetProvider<ProtoTexture, Texture> textures();
 
 	ProtoAssetProvider<ProtoFont, Font> fonts();
+
+	AudioManager audio();
 }

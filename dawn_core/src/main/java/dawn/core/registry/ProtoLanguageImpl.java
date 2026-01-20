@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public final class ProtoLanguageImpl implements ProtoLanguage {
+final class ProtoLanguageImpl implements ProtoLanguage {
 
 	private final Identifier registryKey;
 	private final Map<String, String> entries;

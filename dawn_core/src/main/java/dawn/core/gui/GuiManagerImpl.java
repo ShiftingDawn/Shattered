@@ -2,6 +2,10 @@ package dawn.core.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import dawn.Identifier;
+import dawn.core.audio.AudioChannel;
+import dawn.core.audio.AudioSource;
 import dawn.event.EventBus;
 import dawn.gfx.FontRenderer;
 import dawn.gfx.Tessellator;
@@ -30,11 +34,14 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 
 public final class GuiManagerImpl implements GuiManager {
 
+	private final AtomicBoolean enabled = new AtomicBoolean(false);
 	private final List<GuiScreen> screens = new ArrayList<>();
 	private final @Getter Window window;
+	private final AudioChannel audioChannel;
 
-	public GuiManagerImpl(final Window window) {
+	public GuiManagerImpl(final Window window, final AudioChannel audioChannel) {
 		this.window = window;
+		this.audioChannel = audioChannel;
 		EventBus.bus().register(MouseReleasedEvent.class, true, this, this::handleMouseReleased);
 		EventBus.bus().register(MousePressedEvent.class, true, this, this::handleMousePressed);
 		EventBus.bus().register(MouseClickEvent.class, true, this, this::handleMouseClicked);
@@ -46,6 +53,14 @@ public final class GuiManagerImpl implements GuiManager {
 				this.reload();
 			}
 		});
+	}
+
+	public boolean isEnabled() {
+		return this.enabled.get();
+	}
+
+	public void setEnabled(final boolean enable) {
+		this.enabled.set(enable);
 	}
 
 	@Override
@@ -75,6 +90,14 @@ public final class GuiManagerImpl implements GuiManager {
 		}
 	}
 
+	@Override
+	public void playAudio(final Identifier sound) {
+		final AudioSource source = this.audioChannel.getSource();
+		if (source != null) {
+			source.play(sound);
+		}
+	}
+
 	private void reload() {
 		final List<GuiScreen> screens = this.copyStack();
 		for (int i = screens.size() - 1; i >= 0; --i) {
@@ -87,6 +110,9 @@ public final class GuiManagerImpl implements GuiManager {
 	}
 
 	public void tick() {
+		if (!this.enabled.get()) {
+			return;
+		}
 		final List<GuiScreen> screens = this.copyStack();
 		for (int i = screens.size() - 1; i >= 0; --i) {
 			final GuiScreen screen = screens.get(i);
@@ -103,6 +129,9 @@ public final class GuiManagerImpl implements GuiManager {
 	}
 
 	public void render(final Tessellator tessellator, final FontRenderer fontRenderer) {
+		if (!this.enabled.get()) {
+			return;
+		}
 		final List<GuiScreen> screens = this.copyStack();
 		int renderStartIndex = 0;
 		for (int i = screens.size() - 1; i > 0; --i) {
@@ -140,6 +169,9 @@ public final class GuiManagerImpl implements GuiManager {
 	}
 
 	private void handleMouseEvent(final int button, final MouseEventType eventType, final double mouseX, final double mouseY) {
+		if (!this.enabled.get()) {
+			return;
+		}
 		final List<GuiScreen> screens = this.copyStack();
 		final int mx = (int) mouseX;
 		final int my = (int) mouseY;
@@ -188,6 +220,9 @@ public final class GuiManagerImpl implements GuiManager {
 	}
 
 	private void handleKeyEvent(final int keyCode, final KeyEventType eventType, final KeyMods mods) {
+		if (!this.enabled.get()) {
+			return;
+		}
 		final List<GuiScreen> screens = this.copyStack();
 		if (eventType == KeyEventType.RELEASE && keyCode == GLFW_KEY_ESCAPE) {
 			final GuiScreen last = screens.getLast();

@@ -6,5 +6,7 @@ public interface OptionSupplier {
 
 	ManagedBoolean enableVerticalSync();
 
+	ManagedBoolean enableBootscreen();
+
 	ManagedInt getGuiScale();
 }

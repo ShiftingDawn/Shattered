@@ -2,7 +2,6 @@ package dawn.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-import dawn.Dawn;
 import dawn.internal.DawnLib;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,7 +27,9 @@ public abstract class GuiScreen extends GuiBase {
 	}
 
 	public <T extends GuiWidget> T add(final T widget) {
-		return Dawn.make(widget, this.widgets::addLast);
+		widget.setScreen(this);
+		this.widgets.addLast(widget);
+		return widget;
 	}
 
 	public void remove(final GuiWidget widget) {

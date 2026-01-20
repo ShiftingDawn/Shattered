@@ -20,6 +20,7 @@ import dawn.core.ExitException;
 import dawn.core.lib.json.GsonIdentifierAdapter;
 import dawn.lib.ResourceFinder;
 import dawn.lib.RunOnce;
+import dawn.registry.ProtoAudio;
 import dawn.registry.ProtoFont;
 import dawn.registry.ProtoLanguage;
 import dawn.registry.ProtoShader;
@@ -39,6 +40,7 @@ public final class RegistriesImpl implements Registries {
 	private static final RegistryImpl<ProtoShader> SHADERS = new RegistryImpl<>("shader", new ProtoShaderContentFactory());
 	private static final RegistryImpl<ProtoTexture> TEXTURES = new RegistryImpl<>("texture", new ProtoTextureContentFactory());
 	private static final RegistryImpl<ProtoFont> FONTS = new RegistryImpl<>("font", new ProtoFontContentFactory());
+	private static final RegistryImpl<ProtoAudio> AUDIO = new RegistryImpl<>("audio", new ProtoAudioContentFactory());
 	private static final RegistryImpl<ProtoLanguage> LANGUAGES = new RegistryImpl<>("language", new ProtoLanguageContentFactory());
 
 	public static void load(final ResourceFinder resources) {
@@ -62,13 +64,18 @@ public final class RegistriesImpl implements Registries {
 	}
 
 	@Override
+	public Registry<ProtoAudio> audio() {
+		return RegistriesImpl.AUDIO;
+	}
+
+	@Override
 	public Registry<ProtoLanguage> languages() {
 		return RegistriesImpl.LANGUAGES;
 	}
 
 	private static CompletableFuture<Void> loadAll(final ResourceFinder resources, final String domain) {
 		return CompletableFuture.allOf(Stream.of(
-			RegistriesImpl.SHADERS, RegistriesImpl.TEXTURES, RegistriesImpl.FONTS, RegistriesImpl.LANGUAGES
+			RegistriesImpl.SHADERS, RegistriesImpl.TEXTURES, RegistriesImpl.FONTS, RegistriesImpl.AUDIO, RegistriesImpl.LANGUAGES
 		).map(reg -> RegistriesImpl.loadRegistry(resources, domain, reg)).toList().toArray(CompletableFuture[]::new));
 	}
 

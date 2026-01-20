@@ -1,4 +1,5 @@
 [
+	"shattered:loading",
 	"shattered:gui/button",
 	"shattered:gui/button_pressed",
 	"shattered:gui/toggle_default",

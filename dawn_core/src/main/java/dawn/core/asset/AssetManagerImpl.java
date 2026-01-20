@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import dawn.asset.AssetManager;
+import dawn.asset.AudioManager;
 import dawn.asset.Font;
 import dawn.asset.ProtoAssetProvider;
 import dawn.asset.Shader;
@@ -26,12 +27,14 @@ public final class AssetManagerImpl implements AssetManager {
 	private final ShaderManager shaders = new ShaderManager(this);
 	private final TextureManager textures = new TextureManager(this);
 	private final FontManager fonts = new FontManager(this);
+	private final AudioManagerImpl audio = new AudioManagerImpl(this);
 
 	public void init() {
 		DawnImpl.LOGGER.info("Reloading assets");
 		this.shaders.init();
 		this.textures.init();
 		this.fonts.init();
+		this.audio.init();
 	}
 
 	@Override
@@ -47,6 +50,11 @@ public final class AssetManagerImpl implements AssetManager {
 	@Override
 	public ProtoAssetProvider<ProtoFont, Font> fonts() {
 		return this.fonts;
+	}
+
+	@Override
+	public AudioManager audio() {
+		return this.audio;
 	}
 
 	public void dumpAsset(final String path, final ByteBuffer data) {

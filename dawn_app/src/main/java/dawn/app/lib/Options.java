@@ -8,6 +8,7 @@ import dawn.event.EventBus;
 import dawn.lib.option.ManagedBoolean;
 import dawn.lib.option.ManagedInt;
 import dawn.lib.option.OptionSupplier;
+import static dawn.init.Options.ENABLE_BOOT_SCREEN;
 import static dawn.init.Options.ENABLE_VERTICAL_SYNC;
 import static dawn.init.Options.FULLSCREEN;
 import static dawn.init.Options.GUI_SCALE;
@@ -16,6 +17,7 @@ public final class Options implements OptionSupplier {
 
 	private final ManagedBoolean fullScreen = this.makeBoolean(FULLSCREEN, false);
 	private final ManagedBoolean vsync = this.makeBoolean(ENABLE_VERTICAL_SYNC, true);
+	private final ManagedBoolean bootscreen = this.makeBoolean(ENABLE_BOOT_SCREEN, true);
 	private final ManagedInt guiScale = this.makeInt(GUI_SCALE, 0);
 	private DawnDB db;
 
@@ -60,6 +62,11 @@ public final class Options implements OptionSupplier {
 	@Override
 	public ManagedBoolean enableVerticalSync() {
 		return this.vsync;
+	}
+
+	@Override
+	public ManagedBoolean enableBootscreen() {
+		return this.bootscreen;
 	}
 
 	@Override

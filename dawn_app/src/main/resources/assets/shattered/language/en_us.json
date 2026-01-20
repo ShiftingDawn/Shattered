@@ -4,5 +4,6 @@
 	"screen.shattered.main_menu.options": "Options",
 	"screen.shattered.options": "Options",
 	"screen.shattered.options.vsync": "Enable VSync",
-	"screen.shattered.options.fullscreen": "Fullscreen"
+	"screen.shattered.options.fullscreen": "Fullscreen",
+	"screen.shattered.options.bootscreen": "Enable boot animation"
 }
