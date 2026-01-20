@@ -1,11 +1,16 @@
 package dawn.core.gfx;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import dawn.Dawn;
+import dawn.Identifier;
 import dawn.core.DawnImpl;
 import dawn.core.ExitException;
 import dawn.event.EventBus;
@@ -18,7 +23,9 @@ import dawn.lib.option.OptionChangedEvent;
 import dawn.lib.option.OptionSupplier;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.Callback;
@@ -38,8 +45,6 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_F12;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND;
 import static org.lwjgl.glfw.GLFW.GLFW_RED_BITS;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_SAMPLES;
@@ -52,9 +57,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
 import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 import static org.lwjgl.glfw.GLFW.glfwInit;
-import static org.lwjgl.glfw.GLFW.glfwInitHint;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
-import static org.lwjgl.glfw.GLFW.glfwPlatformSupported;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
@@ -63,6 +66,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowIcon;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowMonitor;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
@@ -70,6 +74,9 @@ import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.stb.STBImage.stbi_image_free;
+import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class WindowImpl implements Window, AutoCloseable {
@@ -119,6 +126,7 @@ public final class WindowImpl implements Window, AutoCloseable {
 			DawnImpl.LOGGER.fatal("Could not create window");
 			throw new ExitException();
 		}
+		WindowImpl.loadIcon(this.pointer);
 		this.reloadFrameBufferSize();
 		this.setupCallbacks();
 		glfwShowWindow(this.pointer);
@@ -131,10 +139,42 @@ public final class WindowImpl implements Window, AutoCloseable {
 		this.onFrameBufferSizeChanged();
 	}
 
+	private static void loadIcon(final long window) {
+		try (InputStream stream = DawnImpl.class.getResourceAsStream(String.format("/assets/%s/texture/icon.png", Identifier.DEFAULT_DOMAIN))) {
+			if (stream == null) {
+				throw new FileNotFoundException();
+			}
+			final byte[] bytes = stream.readAllBytes();
+			final ByteBuffer imageBuffer = Dawn.make(BufferUtils.createByteBuffer(bytes.length), buffer -> {
+				buffer.put(bytes);
+				buffer.flip();
+			});
+			try (MemoryStack stack = stackPush()) {
+				final IntBuffer widthPtr = stack.mallocInt(1);
+				final IntBuffer heightPtr = stack.mallocInt(1);
+				final IntBuffer channelPtr = stack.mallocInt(1);
+				final ByteBuffer image = stbi_load_from_memory(imageBuffer, widthPtr, heightPtr, channelPtr, 4);
+				if (image == null) {
+					throw new IOException();
+				}
+				final GLFWImage iconImage = GLFWImage.malloc();
+				iconImage.set(widthPtr.get(), heightPtr.get(), image);
+				final GLFWImage.Buffer iconBuffer = GLFWImage.malloc(1);
+				iconBuffer.put(0, iconImage);
+				glfwSetWindowIcon(window, iconBuffer);
+				iconBuffer.free();
+				iconImage.free();
+				stbi_image_free(image);
+			}
+		} catch (final IOException e) {
+			DawnImpl.LOGGER.error("Could not set window icon", e);
+		}
+	}
+
 	private void reloadFrameBufferSize() {
-		try (final MemoryStack Stack = MemoryStack.stackPush()) {
-			final IntBuffer widthPtr = Stack.mallocInt(1);
-			final IntBuffer heightPtr = Stack.mallocInt(1);
+		try (final MemoryStack stack = stackPush()) {
+			final IntBuffer widthPtr = stack.mallocInt(1);
+			final IntBuffer heightPtr = stack.mallocInt(1);
 			glfwGetWindowSize(this.pointer, widthPtr, heightPtr);
 			this.framebufferSize[0] = widthPtr.get(0);
 			this.framebufferSize[1] = widthPtr.get(0);
@@ -317,9 +357,6 @@ public final class WindowImpl implements Window, AutoCloseable {
 
 	public static void initGlfw() {
 		WindowImpl.GLFW_INITIALIZED.test(() -> "GLFW has already been initialized");
-		if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
-			glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
-		}
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) {
 			DawnImpl.LOGGER.fatal("Could not initialize GLFW");
